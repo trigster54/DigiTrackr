@@ -395,7 +395,13 @@ function renderMain(){
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});try{if(ss!=null)el.setSelectionRange(ss,se)}catch(e){}}}
   const rn=$("#rn-name");if(rn&&fid!=="rn-name"){rn.focus();rn.select()}
 }
-function render(){renderNav();renderMain()}
+let pendingRender=false;
+function render(){
+  renderNav();
+  const a=document.activeElement;
+  if(a&&a.type==="date"&&$("#main").contains(a)){pendingRender=true;return}
+  pendingRender=false;renderMain();
+}
 
 /* ---------- actions ---------- */
 function setView(v){view=v;openId=null;confirmKey=null;renaming=false;showDone=false;try{localStorage.setItem("dt.view",v)}catch(e){}render();window.scrollTo({top:0})}
@@ -430,15 +436,31 @@ document.addEventListener("click",e=>{
   }
 });
 
-document.addEventListener("change",e=>{
-  const el=e.target;
-  if(el.id==="qa-due"){qa.due=el.value;render();return}
-  if(el.id==="qa-list"){qa.list=el.value;return}
+/* Date boxes fire "change" while the year is still being typed (e.g. 0002), so they are only
+   read when you leave the box; the page also waits to redraw until you're out of a date box. */
+const validDate=v=>!v||(/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000&&+v.slice(0,4)<=2100);
+function syncQaChips(){
+  document.querySelectorAll('[data-act="qadue"]').forEach(b=>b.setAttribute("aria-pressed",String(qa.due===addDays(todayISO(),+b.dataset.d))));
+}
+function saveField(el){
   const f=el.dataset.field;if(!f||!uid)return;const li=el.closest(".task");const t=li&&tasks.find(x=>x.id===li.dataset.id);if(!t)return;
   let v=el.value;if(f==="title"){v=v.trim();if(!v){el.value=t.title;return}}
-  if(f==="due"&&!v)v=null;
+  if(f==="due"){if(!validDate(v)){el.value=t.due||"";return}if(!v)v=null}
   if((t[f]??null)===(v??null)||(f==="notes"&&(t.notes||"")===v))return;
   save(updateDoc(taskRef(t.id),{[f]:v}));
+}
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.id==="qa-due"){if(validDate(el.value)){qa.due=el.value;syncQaChips()}return}
+  if(el.id==="qa-list"){qa.list=el.value;return}
+  if(el.type==="date")return;
+  saveField(el);
+});
+document.addEventListener("focusout",e=>{
+  const el=e.target;if(el.type!=="date")return;
+  if(el.id==="qa-due"){qa.due=validDate(el.value)?el.value:"";if(!validDate(el.value))el.value="";syncQaChips()}
+  else saveField(el);
+  if(pendingRender)setTimeout(()=>{if(!(document.activeElement&&document.activeElement.type==="date"))render()},0);
 });
 
 document.addEventListener("submit",e=>{
@@ -446,6 +468,7 @@ document.addEventListener("submit",e=>{
   if(f.id==="emailForm")return; // handled below
   e.preventDefault();if(!uid)return;
   if(f.id==="qa"){const inp=$("#qa-title");const title=inp.value.trim();if(!title)return;
+    const dv=$("#qa-due")?$("#qa-due").value:"";qa.due=validDate(dv)?dv:"";
     const isList=view!=="upcoming"&&view!=="inbox";const list=isList?view:(view==="inbox"?"":($("#qa-list")?$("#qa-list").value:""));
     const ref=doc(tasksCol());inp.value="";
     save(setDoc(ref,{title,list,due:qa.due||null,prio:qa.prio,notes:"",done:false,created:Date.now(),doneAt:null}));
