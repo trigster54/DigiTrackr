@@ -90,6 +90,9 @@ main{min-width:0;display:flex;flex-direction:column;gap:18px}
 .vhead h1{font-family:var(--f-display);font-weight:800;font-stretch:78%;font-size:clamp(30px,6vw,42px);line-height:1;margin:0;text-wrap:balance;letter-spacing:-.005em}
 .vhead .sub{color:var(--muted);font-size:14px;margin:6px 0 0}
 .sub .over{color:var(--danger);font-weight:600}
+.sub .code{font-family:var(--f-mono);font-size:13px}
+#renameForm{width:100%}
+.newlist .hint{font-size:12px;color:var(--muted);margin:0}
 .vtools{display:flex;gap:6px;flex-wrap:wrap}
 
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-size:14px}
@@ -209,9 +212,11 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
     </div>
     <div class="navscroll" id="nav"></div>
     <form class="newlist" id="newList" hidden>
-      <input type="text" id="nl-name" placeholder="e.g. Applicable Maths 1" maxlength="60" autocomplete="off">
+      <p class="hint">New section</p>
+      <input type="text" id="nl-name" placeholder="Name, e.g. Lifesaving club" maxlength="60" autocomplete="off" aria-label="Section name">
+      <input type="text" id="nl-code" placeholder="Module code (optional)" maxlength="20" autocomplete="off" aria-label="Module code">
       <div class="row">
-        <select id="nl-kind" aria-label="List type"><option value="module">Module</option><option value="list">To-do list</option></select>
+        <select id="nl-kind" aria-label="Section type"><option value="list">To-do list</option><option value="module">Module</option></select>
         <button class="btn primary" type="submit">Add</button>
       </div>
     </form>
@@ -227,7 +232,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebas
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, setDoc, updateDoc, deleteDoc, getDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+  collection, doc, setDoc, updateDoc, deleteDoc, getDoc, getDocs, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA16PhtLd3sHvcE9tiBaqtINDfeBvzPC2g",
@@ -293,7 +298,7 @@ function renderNav(){
   const total=tasks.filter(t=>!t.done).length;
   const btn=(id,name,color,n)=>`<button class="navbtn" data-act="view" data-id="${esc(id)}" aria-current="${view===id}">${color?`<span class="dot" style="background:${color}"></span>`:""}<span>${esc(name)}</span><span class="n">${n}</span></button>`;
   const mods=lists.filter(l=>l.kind==="module"),other=lists.filter(l=>l.kind!=="module");
-  let h=btn("upcoming","Upcoming","",total)+btn("inbox","Inbox","var(--muted)",openCount("inbox"));
+  let h=btn("upcoming","Overview","",total)+btn("inbox","Inbox","var(--muted)",openCount("inbox"));
   h+=`<div class="navgroup"><span class="navhead">Modules</span>${mods.map(l=>btn(l.id,l.name,colorOf(l),openCount(l.id))).join("")}</div>`;
   h+=`<div class="navgroup"><span class="navhead">To-do lists</span>${other.map(l=>btn(l.id,l.name,colorOf(l),openCount(l.id))).join("")}</div>`;
   h+=`<button class="navbtn add" data-act="newlist" type="button">+ New list</button>`;
@@ -340,7 +345,7 @@ function renderMain(){
   const m=$("#main");
   if(!(ready.lists&&ready.tasks))return;
   if(view!=="upcoming"&&view!=="inbox"&&!listById(view))view="upcoming";
-  const cur=view==="upcoming"?{name:"Upcoming"}:view==="inbox"?INBOX:listById(view);
+  const cur=view==="upcoming"?{name:"Overview"}:view==="inbox"?INBOX:listById(view);
   const mine=tasks.filter(inView);const open=mine.filter(t=>!t.done).sort(sortOpen);const done=mine.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
   const late=open.filter(t=>t.due&&diffDays(t.due)<0).length;const week=open.filter(t=>t.due&&diffDays(t.due)>=0&&diffDays(t.due)<=7).length;
   const isList=view!=="upcoming"&&view!=="inbox";
@@ -348,13 +353,14 @@ function renderMain(){
   if(isList)qa.list=view;else if(view==="inbox")qa.list="";else if(qa.list===null||(qa.list&&!listById(qa.list)))qa.list="";
 
   let h=`<div class="vhead"><div>`;
-  if(isList&&renaming)h+=`<form id="renameForm" class="inline-confirm"><input type="text" id="rn-name" value="${esc(cur.name)}" maxlength="60" style="width:auto"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-act="cancelrename">Cancel</button></form>`;
+  if(isList&&renaming)h+=`<form id="renameForm" class="inline-confirm"><input type="text" id="rn-name" value="${esc(cur.name)}" maxlength="60" style="width:auto;flex:1 1 200px" aria-label="Section name"><input type="text" id="rn-code" value="${esc(cur.code||"")}" maxlength="20" placeholder="Code (optional)" style="width:auto;flex:0 1 150px" aria-label="Module code"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-act="cancelrename">Cancel</button></form>`;
   else h+=`<h1>${esc(cur.name)}</h1>`;
-  h+=`<p class="sub">${kindWord?kindWord+" · ":""}${open.length} open${week?` · ${week} due this week`:""}${late?` · <span class="over">${late} overdue</span>`:""}</p></div>`;
+  const codeTxt=isList&&cur.code?`<span class="code">${esc(cur.code)}</span> · `:"";
+  h+=`<p class="sub">${kindWord?kindWord+" · ":""}${codeTxt}${open.length} open${week?` · ${week} due this week`:""}${late?` · <span class="over">${late} overdue</span>`:""}</p></div>`;
   if(isList&&!renaming){const ck="dellist:"+view;
     h+=`<div class="vtools">${confirmKey===ck
       ?`<span class="inline-confirm">Delete this list and its ${mine.length} task${mine.length===1?"":"s"}?<button class="btn danger solid" data-act="dellist">Delete</button><button class="btn" data-act="cancel">Keep</button></span>`
-      :`<button class="btn ghost" data-act="rename">Rename</button><button class="btn ghost" data-act="askdellist">Delete list</button>`}</div>`}
+      :`<button class="btn ghost" data-act="rename">Edit name</button><button class="btn ghost" data-act="askdellist">Delete list</button>`}</div>`}
   h+=`</div>`;
 
   h+=`<form class="qa" id="qa"><div class="top"><input type="text" id="qa-title" placeholder="Add a task…" maxlength="200" autocomplete="off" enterkeyhint="done"><button class="btn primary" type="submit">Add</button></div>
@@ -367,7 +373,7 @@ function renderMain(){
     </div></form>`;
 
   if(!open.length&&!done.length){
-    h+=`<div class="empty"><strong>${view==="upcoming"?"Nothing to do yet":"No tasks here yet"}</strong>Type a task above and press Add. Give it a due date and it shows up under Upcoming in date order.</div>`;
+    h+=`<div class="empty"><strong>${view==="upcoming"?"Nothing to do yet":"No tasks here yet"}</strong>Type a task above and press Add. Give it a due date and it shows up in the Overview in date order.</div>`;
   }else if(!open.length){
     h+=`<div class="empty"><strong>All clear</strong>Everything in ${esc(cur.name)} is done.</div>`;
   }else{
@@ -445,11 +451,12 @@ document.addEventListener("submit",e=>{
     save(setDoc(ref,{title,list,due:qa.due||null,prio:qa.prio,notes:"",done:false,created:Date.now(),doneAt:null}));
     qa.prio="normal";qa.due="";render();$("#qa-title").focus();return}
   if(f.id==="newList"){const name=$("#nl-name").value.trim();if(!name)return;
-    const data={name,kind:$("#nl-kind").value,color:lists.length%6,created:Date.now()};
-    const ref=doc(listsCol());lists.push({id:ref.id,...data});$("#nl-name").value="";f.hidden=true;
+    const code=$("#nl-code").value.trim().toUpperCase();
+    const data={name,code,kind:$("#nl-kind").value,color:lists.length%6,created:Date.now()};
+    const ref=doc(listsCol());lists.push({id:ref.id,...data});$("#nl-name").value="";$("#nl-code").value="";f.hidden=true;
     save(setDoc(ref,data));setView(ref.id);return}
-  if(f.id==="renameForm"){const name=$("#rn-name").value.trim();const l=listById(view);renaming=false;
-    if(name&&l&&name!==l.name)save(updateDoc(listRef(l.id),{name}));render();return}
+  if(f.id==="renameForm"){const name=$("#rn-name").value.trim();const code=$("#rn-code").value.trim().toUpperCase();const l=listById(view);renaming=false;
+    if(name&&l&&(name!==l.name||code!==(l.code||"")))save(updateDoc(listRef(l.id),{name,code}));render();return}
 });
 
 /* ---------- auth ---------- */
@@ -478,16 +485,40 @@ $("#emailForm").addEventListener("submit",async e=>{
   finally{btns.forEach(b=>b.disabled=false)}
 });
 
-async function seedIfNew(){
+/* Foundation year modules. Older lists with these names are renamed rather than duplicated. */
+const MODULES=[
+  ["26FYF911","Applicable Mathematics 1",["Applicable Maths 1"]],
+  ["26FYF912","Physics",[]],
+  ["26FYF921","Applicable Mathematics 2",[]],
+  ["26FYF922","Engineering Science",[]],
+  ["26FYF932","Sustainability in Practice",[]],
+  ["26FYF941","Programming Applications",[]],
+  ["26FYF944","Chemical Structure and Behaviour",["Chemistry"]]
+];
+const MODULES_VERSION=2;
+async function setupModules(){
   const uref=doc(fs,"users",uid);
   try{
-    const s=await getDoc(uref);if(s.exists())return;
+    const us=await getDoc(uref);
+    const u=us.exists()?us.data():null;
+    if(u&&(u.modulesVersion||0)>=MODULES_VERSION)return;
+    const existing=(await getDocs(listsCol())).docs.map(d=>({id:d.id,...d.data()}));
     const b=writeBatch(fs);const now=Date.now();
-    [["Applicable Maths 1","module"],["Chemistry","module"],["Personal","list"]].forEach(([name,kind],i)=>{
-      b.set(doc(listsCol()),{name,kind,color:i,created:now+i})});
-    b.set(uref,{seeded:true,created:now});
+    MODULES.forEach(([code,name,oldNames],i)=>{
+      const match=existing.find(l=>l.code===code)||existing.find(l=>!l.code&&(l.name===name||oldNames.includes(l.name)));
+      if(match)b.update(listRef(match.id),{name,code,kind:"module",color:i%6});
+      else b.set(doc(listsCol()),{name,code,kind:"module",color:i%6,created:now+i});
+    });
+    if(!u&&!existing.some(l=>l.name==="Personal"))b.set(doc(listsCol()),{name:"Personal",code:"",kind:"list",color:1,created:now+10});
+    b.set(uref,{seeded:true,modulesVersion:MODULES_VERSION,updated:now},{merge:true});
     await b.commit();
-  }catch(e){console.warn("seed skipped",e)}
+  }catch(e){console.warn("module setup skipped",e)}
+}
+function sortLists(a,b){
+  if((a.kind==="module")!==(b.kind==="module"))return a.kind==="module"?-1:1;
+  if(a.code&&b.code&&a.code!==b.code)return a.code<b.code?-1:1;
+  if(!!a.code!==!!b.code)return a.code?-1:1;
+  return(a.created||0)-(b.created||0);
 }
 
 function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];ready={lists:false,tasks:false};openId=null;confirmKey=null}
@@ -500,9 +531,9 @@ onAuthStateChanged(auth,user=>{
   $("#main").innerHTML=`<div class="empty"><strong>Loading your tasks…</strong>Your modules and lists will appear here.</div>`;
   renderNav();
   const onErr=e=>{console.error(e);toast(errMsg(e))};
-  unsubs.push(onSnapshot(listsCol(),s=>{lists=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.created||0)-(b.created||0));ready.lists=true;render()},onErr));
+  unsubs.push(onSnapshot(listsCol(),s=>{lists=s.docs.map(d=>({id:d.id,...d.data()})).sort(sortLists);ready.lists=true;render()},onErr));
   unsubs.push(onSnapshot(tasksCol(),s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));ready.tasks=true;render()},onErr));
-  seedIfNew();
+  setupModules();
 });
 
 /* ---------- misc ---------- */
