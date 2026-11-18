@@ -24,6 +24,7 @@
   --accent:#2C58CF; --accent-ink:#FFFFFF;
   --danger:#C23E2B; --warn:#A86A12; --ok:#2C7A57;
   --c0:#2C58CF; --c1:#C2562B; --c2:#2C7A57; --c3:#8A4FC0; --c4:#B5891A; --c5:#1F8A9A;
+  --shadow:rgba(24,32,46,.08);
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -34,6 +35,7 @@
   --accent:#7D9CFF; --accent-ink:#0E1219;
   --danger:#F07B67; --warn:#E3B05A; --ok:#62C79A;
   --c0:#7D9CFF; --c1:#F0956B; --c2:#62C79A; --c3:#C39BF0; --c4:#E3C25A; --c5:#5ACBDB;
+  --shadow:rgba(0,0,0,.45);
   color-scheme:dark}}
 
 *{box-sizing:border-box}
@@ -172,6 +174,68 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .err{color:var(--danger);font-size:13px;min-height:1em}
 .hint{font-size:12px}
 
+/* Grades */
+.ghero{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:16px;box-shadow:0 1px 2px var(--shadow),0 10px 28px -14px var(--shadow)}
+.ghero .top{display:flex;flex-wrap:wrap;gap:14px 28px;justify-content:space-between;align-items:flex-end}
+.ghero .top>div{min-width:0}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.ghero h2{font-family:var(--f-display);font-weight:800;font-stretch:80%;font-size:26px;line-height:1.05;margin:0;text-wrap:balance}
+.ghero .expl{margin:6px 0 0;color:var(--muted);max-width:56ch;font-size:14px}
+.bignum{display:flex;align-items:flex-end;gap:10px;min-width:0}
+.bignum .n{font-family:var(--f-display);font-weight:800;font-stretch:75%;font-size:60px;line-height:.85;color:var(--accent);font-variant-numeric:tabular-nums}
+.bignum .l{font-size:13px;color:var(--muted);max-width:24ch;line-height:1.3}
+.reqgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+.rtile{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:6px;align-content:start;background:var(--bg);min-width:0}
+.rtile .rt{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--muted)}
+.rtile .rv{font-family:var(--f-mono);font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
+.rtile .rv small{font-family:var(--f-body);font-size:12px;color:var(--muted);margin-left:5px}
+.rtile .rd{font-size:12.5px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--soft);color:var(--muted)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.pill.bad{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.mini{height:6px;border-radius:99px;background:var(--soft);overflow:hidden}
+.mini span{display:block;height:100%;background:var(--ok);border-radius:99px}
+.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.gch{display:flex;gap:10px;align-items:flex-start}
+.gch .dot{width:10px;height:10px;border-radius:3px;margin-top:6px;flex:none}
+.gch .ti{flex:1;min-width:0;display:grid;gap:2px}
+.gch h3{font-size:16px;font-weight:600;margin:0;line-height:1.25;overflow-wrap:anywhere}
+.gch .mt{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.gch .mt .pill{font-family:var(--f-body);margin-left:4px}
+.gch .mk{text-align:right;flex:none}
+.gch .mk b{display:block;font-family:var(--f-display);font-weight:800;font-stretch:80%;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.gch .mk span{font-size:11px;color:var(--muted)}
+.mbarwrap{position:relative;padding-bottom:14px}
+.mbar{height:10px;border-radius:99px;background:var(--soft);display:flex;overflow:hidden}
+.mbar .seg{height:100%;flex:none}
+.mbar .got{background:var(--accent)}
+.mbar .lost{background:var(--line)}
+.mbar .rem{background:repeating-linear-gradient(135deg,var(--soft) 0 4px,var(--line) 4px 5px)}
+.tick{position:absolute;top:-2px;height:14px;width:2px;background:var(--ink);opacity:.5;transform:translateX(-1px)}
+.tick b{position:absolute;top:15px;left:50%;transform:translateX(-50%);font:500 10px/1 var(--f-mono);color:var(--muted)}
+.tick.req{background:var(--warn);opacity:1}
+.tick.req b{color:var(--warn)}
+.comps{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.comp{display:flex;align-items:center;gap:10px;min-width:0}
+.comp .cn{flex:1;min-width:0;overflow-wrap:anywhere}
+.comp .cw{font-family:var(--f-mono);font-size:12px;color:var(--muted);background:var(--soft);padding:1px 6px;border-radius:6px;flex:none}
+.cmark,.cwi{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:13px;flex:none}
+.cmark input,.cwi input{width:68px;text-align:right;padding:6px 8px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.comp.edit>input{flex:1}
+.xbtn{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;padding:2px 8px;border-radius:6px;flex:none}
+.xbtn:hover{color:var(--danger);background:var(--soft)}
+.aim{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:3px;margin-top:auto}
+.aim .a1{font-weight:600}
+.aim .a1 b{color:var(--accent);font-family:var(--f-mono);font-size:16px}
+.aim .a2{font-size:12.5px;color:var(--muted)}
+.gedit{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.gwarn{font-size:12.5px;color:var(--warn);margin:0}
+.gnote{font-size:12.5px;color:var(--muted);margin:0;max-width:70ch}
+.btn.sm{padding:4px 10px;font-size:13px}
+
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:20}
 .offline{font-size:12px;color:var(--warn)}
 </style>
@@ -293,12 +357,214 @@ const BUCKETS=[["overdue","Overdue"],["today","Today"],["tomorrow","Tomorrow"],[
 function inView(t){if(view==="upcoming")return true;if(view==="inbox")return !t.list||!listById(t.list);return t.list===view}
 function openCount(id){return tasks.filter(t=>!t.done&&(id==="inbox"?(!t.list||!listById(t.list)):t.list===id)).length}
 
+/* ---------- grades ---------- */
+const PASS=40, OVERALL=60, NEED_CREDITS=100;
+// [code, name, credits, semester, Mech Eng minimum, [[assessment, weight %], ...]]
+const GRADE_SEED=[
+  ["26FYF911","Applicable Mathematics 1",20,"1",70,[["Coursework",20],["Exam",80]]],
+  ["26FYF912","Physics",20,"1",null,[["Coursework",40],["Exam",60]]],
+  ["26FYF944","Chemical Structure and Behaviour",10,"1",null,[["Coursework",20],["Exam",80]]],
+  ["26FYF921","Applicable Mathematics 2",20,"2",70,[["Coursework",20],["Exam",80]]],
+  ["26FYF922","Engineering Science",20,"2",null,[["Coursework",20],["Exam",80]]],
+  ["26FYF941","Programming Applications",10,"2",null,[["Coursework",100]]],
+  ["26FYF932","Sustainability in Practice",20,"1+2",null,[["Coursework",100]]]
+];
+let grades=[];const gEditing=new Set();
+const gradesCol=()=>collection(fs,"users",uid,"grades");
+const gradeRef=id=>doc(fs,"users",uid,"grades",id);
+const isNum=v=>typeof v==="number"&&isFinite(v);
+const newId=()=>Math.random().toString(36).slice(2,9);
+const pct=n=>`${Math.round(n*10)/10}%`;
+const up=n=>Math.max(0,Math.ceil(n-1e-9));
+
+async function setupGrades(){
+  try{
+    const s=await getDocs(gradesCol());if(!s.empty)return;
+    const b=writeBatch(fs);
+    GRADE_SEED.forEach(([code,name,credits,sem,req,comps],i)=>b.set(gradeRef(code),{code,name,credits,sem,req,order:i,
+      components:comps.map(([n,w])=>({id:newId(),name:n,weight:w,mark:null}))}));
+    await b.commit();
+  }catch(e){console.warn("grades setup skipped",e)}
+}
+
+/* One module: pts = marks banked (out of 100), remW = weighting still to be marked. */
+function modStats(g){
+  let wTot=0,doneW=0,pts=0;
+  (g.components||[]).forEach(c=>{const w=+c.weight||0;wTot+=w;if(isNum(c.mark)){doneW+=w;pts+=w*c.mark/100}});
+  const remW=Math.max(0,wTot-doneW);
+  const needFor=t=>remW>0?(t-pts)/remW*100:(pts>=t-1e-9?-Infinity:Infinity);
+  const minNeed=Math.max(needFor(PASS),g.req?needFor(g.req):-Infinity);
+  return{wTot,doneW,pts,remW,avg:doneW?pts/doneW*100:null,complete:doneW>0&&remW===0,needFor,minNeed};
+}
+/* Finds the lowest score x such that scoring max(x, each module's minimum) on everything
+   still to be marked gives a credit-weighted average of 60%. */
+function gradePlan(){
+  const M=grades.map(g=>({g,c:+g.credits||0,s:modStats(g)}));
+  const C=M.reduce((a,m)=>a+m.c,0)||1;
+  const aimAt=(m,x)=>m.s.remW?Math.min(100,Math.max(x,m.s.minNeed)):0;
+  const overallAt=x=>M.reduce((a,m)=>a+m.c*(m.s.pts+m.s.remW*aimAt(m,x)/100),0)/C;
+  let x=null,state;
+  if(!M.some(m=>m.s.remW>0))state="done";
+  else if(overallAt(0)>=OVERALL-1e-9){x=0;state="secured"}
+  else if(overallAt(100)<OVERALL-1e-9)state="impossible";
+  else{let lo=0,hi=100;for(let i=0;i<50;i++){const mid=(lo+hi)/2;if(overallAt(mid)>=OVERALL)hi=mid;else lo=mid}x=hi;state="plan"}
+  const doneCW=M.reduce((a,m)=>a+m.c*m.s.doneW,0);
+  const soFar=doneCW?M.reduce((a,m)=>a+m.c*m.s.pts,0)/doneCW*100:null;
+  const banked=M.filter(m=>m.s.complete&&m.s.pts>=PASS-1e-9).reduce((a,m)=>a+m.c,0);
+  const lost=M.filter(m=>m.s.needFor(PASS)>100).reduce((a,m)=>a+m.c,0);
+  return{M,C,x,state,soFar,final:overallAt(0),best:overallAt(100),banked,lost,aimAt};
+}
+function reqStatus(m,t){const s=m.s;
+  if(s.complete)return s.pts>=t-1e-9?["ok","Achieved"]:["bad","Missed"];
+  const n=s.needFor(t);
+  if(n<=0)return["ok","Secured"];
+  if(n>100)return["bad","Not reachable"];
+  if(s.avg==null)return["","Not started"];
+  return s.avg>=t?["ok","On track"]:["warn",`Below ${t}% so far`];
+}
+function reqDetail(m,t){const s=m.s;
+  if(s.complete)return`Final mark ${pct(s.pts)}`;
+  const n=s.needFor(t);
+  if(n<=0)return`${t}% already secured`;
+  if(n>100)return`100% in what's left would give ${pct(s.pts+s.remW)}`;
+  return`Need ${up(n)}% in what's left`;
+}
+const pillHTML=([cls,txt])=>`<span class="pill ${cls}">${esc(txt)}</span>`;
+function reqTile(title,value,unit,detail,pill,bar){
+  return`<div class="rtile"><div class="rt"><span>${esc(title)}</span>${pillHTML(pill)}</div><div class="rv">${value}${unit?`<small>${esc(unit)}</small>`:""}</div>${bar!=null?`<div class="mini"><span style="width:${Math.max(0,Math.min(100,bar))}%"></span></div>`:""}<div class="rd">${esc(detail)}</div></div>`;
+}
+function gradeColor(g){const l=lists.find(x=>x.code===g.code);return l?colorOf(l):`var(--c${(g.order||0)%6})`}
+
+function aimHTML(m,P){
+  const s=m.s,g=m.g,comps=g.components||[];
+  if(!comps.length)return`<div class="aim"><span class="a2">Add this module's assessments with Edit.</span></div>`;
+  if(s.complete){
+    const note=s.pts<PASS-1e-9?`Below the ${PASS}% pass mark`:g.req&&s.pts<g.req-1e-9?`Passed, but under the ${g.req}% Mech Eng minimum`:g.req?`Meets the ${g.req}% Mech Eng minimum`:"Passed";
+    return`<div class="aim"><span class="a1">Final mark <b>${pct(s.pts)}</b></span><span class="a2">${note}</span></div>`;
+  }
+  const rem=comps.filter(c=>!isNum(c.mark)&&(+c.weight||0)>0);
+  const where=rem.length===1?`in ${esc(rem[0].name)}`:`across your ${rem.length} remaining assessments`;
+  const lines=[];const p=s.needFor(PASS);
+  lines.push(p<=0?"Pass already secured":p>100?`Can't reach ${PASS}% any more`:`To pass: ${up(p)}%`);
+  if(g.req){const r=s.needFor(g.req);lines.push(r<=0?`${g.req}% already secured`:r>100?`Can't reach ${g.req}% any more`:`Mech Eng minimum: ${up(r)}%`)}
+  let a1;
+  if(s.minNeed>100)a1=`Aim for <b>100%</b> ${where}`;
+  else if(P.state==="plan"||P.state==="secured"){const aim=P.aimAt(m,P.x);
+    a1=aim<=0?"You've already secured what you need here":`Aim for <b>${up(aim)}%</b> ${where}`}
+  else a1=`Aim as high as you can ${where}`;
+  return`<div class="aim"><span class="a1">${a1}</span><span class="a2">${lines.join(" · ")}</span></div>`;
+}
+function gradeCard(m,P){
+  const g=m.g,s=m.s,ed=gEditing.has(g.id),comps=g.components||[];
+  const mark=s.complete?s.pts:s.avg;
+  let pill;
+  if(s.complete)pill=s.pts<PASS-1e-9?["bad","Failed"]:g.req&&s.pts<g.req-1e-9?["warn",`Under ${g.req}%`]:["ok",g.req?`${g.req}%+ met`:"Passed"];
+  else if(s.minNeed>100)pill=["bad","Minimum out of reach"];
+  else if(!s.doneW)pill=["","No marks yet"];
+  else pill=["",`${Math.round(s.doneW)}% marked`];
+  const k=100/Math.max(100,s.wTot);
+  const bar=`<div class="mbarwrap" role="img" aria-label="${esc(g.name)}: ${pct(s.pts)} banked, ${pct(s.remW)} still to be marked"><div class="mbar">
+      <span class="seg got" style="width:${s.pts*k}%"></span><span class="seg lost" style="width:${(s.doneW-s.pts)*k}%"></span><span class="seg rem" style="width:${s.remW*k}%"></span></div>
+      <i class="tick" style="left:${PASS}%"><b>${PASS}</b></i>${g.req?`<i class="tick req" style="left:${g.req}%"><b>${g.req}</b></i>`:""}</div>`;
+  const q=`data-code="${esc(g.id)}"`;
+  let body;
+  if(ed){
+    body=`<ul class="comps">${comps.map(c=>`<li class="comp edit">
+        <input type="text" id="gn-${esc(g.id)}-${esc(c.id)}" data-g="name" ${q} data-cid="${esc(c.id)}" value="${esc(c.name)}" maxlength="40" aria-label="Assessment name">
+        <label class="cwi"><input type="text" inputmode="decimal" id="gw-${esc(g.id)}-${esc(c.id)}" data-g="weight" ${q} data-cid="${esc(c.id)}" value="${esc(c.weight)}" aria-label="Weighting for ${esc(c.name)}">%</label>
+        <button type="button" class="xbtn" data-act="gdel" ${q} data-cid="${esc(c.id)}" aria-label="Remove ${esc(c.name)}">×</button></li>`).join("")}</ul>
+      <div class="gedit"><label class="cwi">Credits <input type="text" inputmode="numeric" id="gc-${esc(g.id)}" data-g="credits" ${q} value="${esc(g.credits)}" aria-label="Credits"></label>
+        <span style="display:flex;gap:8px"><button type="button" class="btn sm" data-act="gadd" ${q}>+ Add assessment</button><button type="button" class="btn sm primary" data-act="gedit" ${q}>Done</button></span></div>`;
+  }else{
+    body=`<ul class="comps">${comps.map(c=>`<li class="comp"><span class="cn">${esc(c.name)}</span><span class="cw">${esc(c.weight)}%</span>
+        <label class="cmark"><input type="text" inputmode="decimal" id="gm-${esc(g.id)}-${esc(c.id)}" data-g="mark" ${q} data-cid="${esc(c.id)}" value="${isNum(c.mark)?c.mark:""}" placeholder="–" aria-label="Mark for ${esc(c.name)}, ${esc(g.name)}">%</label></li>`).join("")}</ul>`;
+  }
+  const warn=Math.abs(s.wTot-100)>1e-9&&comps.length?`<p class="gwarn">Weightings add up to ${pct(s.wTot)}. They should total 100%.</p>`:"";
+  const sem=g.sem==="1+2"?"Sem 1 & 2":`Sem ${esc(g.sem)}`;
+  return`<article class="gcard"><div class="gch"><span class="dot" style="background:${gradeColor(g)}"></span>
+      <div class="ti"><h3>${esc(g.name)}</h3><span class="mt">${esc(g.code)} · ${esc(g.credits)} cr · ${sem} ${pillHTML(pill)}</span></div>
+      <div class="mk"><b>${mark==null?"–":pct(mark)}</b><span>${s.complete?"final":mark==null?"no marks":"so far"}</span></div></div>
+    ${bar}${body}${warn}${ed?"":aimHTML(m,P)}
+    ${ed?"":`<div><button type="button" class="btn ghost sm" data-act="gedit" ${q}>Edit assessments</button></div>`}</article>`;
+}
+function renderGrades(){
+  const P=gradePlan();
+  const M=[...P.M].sort((a,b)=>(a.g.order||0)-(b.g.order||0));
+  const maths=M.filter(m=>m.g.req);
+  // Requirement tiles
+  const credPill=P.banked>=NEED_CREDITS?["ok","Achieved"]:P.C-P.lost>=NEED_CREDITS?(P.banked?["ok","On track"]:["","In progress"]):["bad","Not reachable"];
+  const credTile=reqTile("Credits",`${P.banked}`,`of ${NEED_CREDITS} passed`,P.lost?`${P.lost} credits can no longer be passed`:`${P.C-P.banked} credits still to finish`,credPill,P.banked/NEED_CREDITS*100);
+  let ovPill;
+  if(P.state==="done")ovPill=P.final>=OVERALL-1e-9?["ok","Achieved"]:["bad","Missed"];
+  else if(P.state==="secured")ovPill=["ok","Secured"];
+  else if(P.state==="impossible")ovPill=["bad","Not reachable"];
+  else ovPill=P.soFar==null?["","Not started"]:P.soFar>=OVERALL?["ok","On track"]:["warn",`Below ${OVERALL}% so far`];
+  const ovTile=reqTile("Overall average",P.state==="done"?pct(P.final):P.soFar==null?"–":pct(P.soFar),P.state==="done"?"final":"so far",
+    P.state==="done"?`Needed ${OVERALL}%`:`Need ${OVERALL}% · best possible ${pct(P.best)}`,ovPill,null);
+  const mathTiles=maths.map(m=>reqTile(m.g.name.replace("Applicable Mathematics","Maths"),m.s.complete?pct(m.s.pts):m.s.avg==null?"–":pct(m.s.avg),m.s.complete?"final":"so far",reqDetail(m,m.g.req),reqStatus(m,m.g.req),null));
+  const pills=[credPill,ovPill,...maths.map(m=>reqStatus(m,m.g.req))];
+  const met=p=>p[1]==="Achieved"||p[1]==="Secured";
+  // Headline
+  let head,expl,big="";
+  if(pills.every(met)){head="Transfer requirements met";expl="You've met all three Mechanical Engineering requirements."}
+  else if(pills.some(p=>p[0]==="bad")){
+    head="Not reachable on current marks";
+    const why=[];
+    if(credPill[0]==="bad")why.push(`fewer than ${NEED_CREDITS} credits can still be passed`);
+    if(ovPill[0]==="bad")why.push(`a ${OVERALL}% overall average is out of reach`);
+    maths.forEach(m=>{if(reqStatus(m,m.g.req)[0]==="bad")why.push(`${m.g.name} can't reach ${m.g.req}%`)});
+    expl=`Based on your marks so far, ${why.join(", ")}. Check resit options with your programme team.`;
+  }else{
+    const warn=pills.some(p=>p[0]==="warn");
+    head=warn?"Within reach, with work to do":"On course for Mechanical Engineering";
+    expl=`You need ${NEED_CREDITS}+ credits passed, a ${OVERALL}% overall average and at least 70% in each maths module.`;
+    if(P.state==="plan"){
+      const mathsLeft=maths.some(m=>m.s.remW>0);
+      big=`<div class="bignum"><span class="n">${up(P.x)}%</span><span class="l">average needed in everything still to be marked${mathsLeft?", with at least 70% in each maths module":""}</span></div>`;
+    }
+  }
+  const sections=[["1","Semester 1"],["2","Semester 2"],["1+2","Both semesters"]].map(([k,label])=>{
+    const ms=M.filter(m=>(m.g.sem||"")===k);if(!ms.length)return"";
+    const cr=ms.reduce((a,m)=>a+m.c,0);
+    return`<section class="group"><h2>${label}<span class="n">${cr} cr</span></h2><div class="gcards">${ms.map(m=>gradeCard(m,P)).join("")}</div></section>`;
+  }).join("");
+  const h=`<div class="vhead"><div><h1>Grades</h1><p class="sub">Foundation year · ${P.C} credits</p></div></div>
+    <section class="ghero" aria-label="Mechanical Engineering transfer">
+      <div class="top"><div><p class="eyebrow">Mechanical Engineering transfer</p><h2>${esc(head)}</h2><p class="expl">${esc(expl)}</p></div>${big}</div>
+      <div class="reqgrid">${credTile}${ovTile}${mathTiles.join("")}</div>
+    </section>
+    ${sections}
+    <p class="gnote">Type a mark when you get it back, or leave it blank if it isn't marked yet. Assumes a ${PASS}% pass mark per module and an overall average weighted by credits. "Aim for" spreads what you need evenly across everything left, so a higher mark in one place lowers what you need elsewhere.</p>`;
+  setMain(h);
+}
+function setMain(h){
+  const m=$("#main");const a=document.activeElement;const fid=a&&a.id;let ss=null,se=null;
+  try{ss=a.selectionStart;se=a.selectionEnd}catch(e){}
+  m.innerHTML=h;
+  if(fid){const el=document.getElementById(fid);if(el&&m.contains(el)){el.focus({preventScroll:true});try{if(ss!=null)el.setSelectionRange(ss,se)}catch(e){}}}
+}
+function saveComps(g,comps){save(updateDoc(gradeRef(g.id),{components:comps}))}
+function saveGrade(el){
+  const g=grades.find(x=>x.id===el.dataset.code);if(!g)return;
+  const k=el.dataset.g;const raw=el.value.trim().replace("%","");
+  if(k==="credits"){const v=Math.round(+raw);if(!(v>0&&v<=120)){el.value=g.credits;toast("Enter credits from 1 to 120.");return}
+    if(v!==g.credits)save(updateDoc(gradeRef(g.id),{credits:v}));return}
+  const comps=(g.components||[]).map(c=>({...c}));const c=comps.find(x=>x.id===el.dataset.cid);if(!c)return;
+  if(k==="mark"){let v=raw===""?null:+raw;
+    if(v!==null&&!(isFinite(v)&&v>=0&&v<=100)){el.value=isNum(c.mark)?c.mark:"";toast("Enter a mark from 0 to 100, or leave it blank.");return}
+    if(v!==null)v=Math.round(v*10)/10;if(v===(isNum(c.mark)?c.mark:null))return;c.mark=v}
+  else if(k==="name"){if(!raw){el.value=c.name;return}if(raw===c.name)return;c.name=raw}
+  else if(k==="weight"){const v=+raw;if(!(raw!==""&&isFinite(v)&&v>=0&&v<=100)){el.value=c.weight;toast("Enter a weighting from 0 to 100.");return}
+    if(v===c.weight)return;c.weight=v}
+  saveComps(g,comps);
+}
+
 /* ---------- render ---------- */
 function renderNav(){
   const total=tasks.filter(t=>!t.done).length;
-  const btn=(id,name,color,n)=>`<button class="navbtn" data-act="view" data-id="${esc(id)}" aria-current="${view===id}">${color?`<span class="dot" style="background:${color}"></span>`:""}<span>${esc(name)}</span><span class="n">${n}</span></button>`;
+  const btn=(id,name,color,n)=>`<button class="navbtn" data-act="view" data-id="${esc(id)}" aria-current="${view===id}">${color?`<span class="dot" style="background:${color}"></span>`:""}<span>${esc(name)}</span>${n===""?"":`<span class="n">${n}</span>`}</button>`;
   const mods=lists.filter(l=>l.kind==="module"),other=lists.filter(l=>l.kind!=="module");
-  let h=btn("upcoming","Overview","",total)+btn("inbox","Inbox","var(--muted)",openCount("inbox"));
+  let h=btn("upcoming","Overview","",total)+btn("grades","Grades","",gradesNavValue())+btn("inbox","Inbox","var(--muted)",openCount("inbox"));
   h+=`<div class="navgroup"><span class="navhead">Modules</span>${mods.map(l=>btn(l.id,l.name,colorOf(l),openCount(l.id))).join("")}</div>`;
   h+=`<div class="navgroup"><span class="navhead">To-do lists</span>${other.map(l=>btn(l.id,l.name,colorOf(l),openCount(l.id))).join("")}</div>`;
   h+=`<button class="navbtn add" data-act="newlist" type="button">+ New list</button>`;
@@ -341,8 +607,13 @@ function editHTML(t){
       <button class="btn" data-act="open">Close</button></div>
   </div>`;
 }
+function gradesNavValue(){
+  if(!ready.grades||!grades.length)return"";
+  const P=gradePlan();return P.soFar==null?"":pct(P.soFar);
+}
 function renderMain(){
   const m=$("#main");
+  if(view==="grades"){if(ready.grades)renderGrades();return}
   if(!(ready.lists&&ready.tasks))return;
   if(view!=="upcoming"&&view!=="inbox"&&!listById(view))view="upcoming";
   const cur=view==="upcoming"?{name:"Overview"}:view==="inbox"?INBOX:listById(view);
@@ -396,10 +667,11 @@ function renderMain(){
   const rn=$("#rn-name");if(rn&&fid!=="rn-name"){rn.focus();rn.select()}
 }
 let pendingRender=false;
+/* Don't redraw under someone mid-way through typing a date or a mark. */
+const holdsRender=a=>!!a&&$("#main").contains(a)&&(a.type==="date"||a.dataset.g!==undefined);
 function render(){
   renderNav();
-  const a=document.activeElement;
-  if(a&&a.type==="date"&&$("#main").contains(a)){pendingRender=true;return}
+  if(holdsRender(document.activeElement)){pendingRender=true;return}
   pendingRender=false;renderMain();
 }
 
@@ -429,6 +701,10 @@ document.addEventListener("click",e=>{
       toast(`Deleted ${ds.length} completed task${ds.length===1?"":"s"}`);render();break}
     case"rename":renaming=true;render();break;
     case"cancelrename":renaming=false;render();break;
+    case"gedit":{const id=b.dataset.code;if(gEditing.has(id))gEditing.delete(id);else gEditing.add(id);render();break}
+    case"gadd":{const g=grades.find(x=>x.id===b.dataset.code);if(g)saveComps(g,[...(g.components||[]).map(c=>({...c})),{id:newId(),name:"New assessment",weight:0,mark:null}]);break}
+    case"gdel":{const g=grades.find(x=>x.id===b.dataset.code);if(g){const gone=(g.components||[]).find(c=>c.id===b.dataset.cid);
+      saveComps(g,(g.components||[]).filter(c=>c.id!==b.dataset.cid).map(c=>({...c})));if(gone)toast(`Removed ${gone.name}`)}break}
     case"askdellist":confirmKey="dellist:"+view;render();break;
     case"dellist":{const lid=view;const ts=tasks.filter(x=>x.list===lid);const name=(listById(lid)||{}).name;
       for(let i=0;i<ts.length;i+=450){const bt=writeBatch(fs);ts.slice(i,i+450).forEach(x=>bt.delete(taskRef(x.id)));save(bt.commit())}
@@ -453,14 +729,20 @@ document.addEventListener("change",e=>{
   const el=e.target;
   if(el.id==="qa-due"){if(validDate(el.value)){qa.due=el.value;syncQaChips()}return}
   if(el.id==="qa-list"){qa.list=el.value;return}
+  if(el.dataset.g!==undefined){saveGrade(el);return}
   if(el.type==="date")return;
   saveField(el);
 });
 document.addEventListener("focusout",e=>{
-  const el=e.target;if(el.type!=="date")return;
-  if(el.id==="qa-due"){qa.due=validDate(el.value)?el.value:"";if(!validDate(el.value))el.value="";syncQaChips()}
-  else saveField(el);
-  if(pendingRender)setTimeout(()=>{if(!(document.activeElement&&document.activeElement.type==="date"))render()},0);
+  const el=e.target;
+  if(el.type==="date"){
+    if(el.id==="qa-due"){qa.due=validDate(el.value)?el.value:"";if(!validDate(el.value))el.value="";syncQaChips()}
+    else saveField(el);
+  }
+  if(pendingRender)setTimeout(()=>{if(!holdsRender(document.activeElement))render()},0);
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.g!==undefined){e.preventDefault();e.target.blur()}
 });
 
 document.addEventListener("submit",e=>{
@@ -544,7 +826,7 @@ function sortLists(a,b){
   return(a.created||0)-(b.created||0);
 }
 
-function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];ready={lists:false,tasks:false};openId=null;confirmKey=null}
+function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];grades=[];gEditing.clear();ready={lists:false,tasks:false,grades:false};openId=null;confirmKey=null}
 onAuthStateChanged(auth,user=>{
   stop();
   if(!user){uid=null;$("#appView").hidden=true;$("#authView").hidden=false;return}
@@ -556,7 +838,8 @@ onAuthStateChanged(auth,user=>{
   const onErr=e=>{console.error(e);toast(errMsg(e))};
   unsubs.push(onSnapshot(listsCol(),s=>{lists=s.docs.map(d=>({id:d.id,...d.data()})).sort(sortLists);ready.lists=true;render()},onErr));
   unsubs.push(onSnapshot(tasksCol(),s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));ready.tasks=true;render()},onErr));
-  setupModules();
+  unsubs.push(onSnapshot(gradesCol(),s=>{grades=s.docs.map(d=>({id:d.id,...d.data()}));ready.grades=true;render()},onErr));
+  setupModules();setupGrades();
 });
 
 /* ---------- misc ---------- */
