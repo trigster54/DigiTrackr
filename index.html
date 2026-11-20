@@ -246,6 +246,24 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 .cmark,.cwi{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:13px;font-weight:600;flex:none}
 .cmark input,.cwi input{width:72px;text-align:right;padding:6px 10px;font-family:var(--f-display);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
 .comp.edit>input{flex:1}
+.cexp{border:0;background:none;color:var(--muted);width:24px;height:24px;margin-left:-4px;border-radius:7px;display:grid;place-items:center;padding:0;flex:none}
+.cexp svg{width:14px;height:14px;transition:transform .2s}
+.cexp:hover{background:var(--soft);color:var(--ink)}
+.cexp[aria-expanded="true"] svg{transform:rotate(90deg)}
+.cexp.has{color:var(--accent)}
+.comp .cn small{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cagg{min-width:72px;text-align:right;padding:6px 10px;margin-right:16px;border-radius:var(--r-ctl);background:var(--soft);font:600 18px/1.2 var(--f-display);font-variant-numeric:tabular-nums}
+.cagg.none{color:var(--muted)}
+.parts{display:grid;gap:8px;margin:2px 0 6px 11px;padding:8px 0 4px 14px;border-left:2px solid var(--line)}
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.part{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:8px}
+.part>input{background:transparent;border-color:transparent;padding:6px 8px;font-size:15px;font-weight:500}
+.part>input:hover{border-color:var(--line)}
+.part .cwi input{width:58px;font-size:16px}
+.pfoot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.phint{font-size:12.5px;color:var(--muted)}
+.warnt{color:var(--warn)}
+@media (max-width:460px){.part{row-gap:0}.plist{gap:12px}.part>input{grid-column:1/-1;padding-left:0;padding-block:2px}.part .cwi{grid-column:2}.part .cmark{grid-column:3}.part .xbtn{grid-column:4}.parts{margin-left:6px;padding-left:10px}}
 .xbtn{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;padding:2px 8px;border-radius:8px;flex:none}
 .xbtn:hover{color:var(--danger);background:var(--soft)}
 .aim{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:4px;margin-top:auto}
@@ -479,17 +497,20 @@ function openCount(id){return tasks.filter(t=>!t.done&&(id==="inbox"?(!t.list||!
 
 /* ---------- grades ---------- */
 const PASS=40, OVERALL=60, NEED_CREDITS=100;
+// Smaller assessments inside a component. Weights are % of the whole module and should add up to the component's weight.
+const PHYS_PARTS=[["Assessed tutorial",10],["Isaac Physics engagement",10],["Lab assessment",20]];
+const mkParts=ps=>ps.map(([n,w])=>({id:newId(),name:n,weight:w,mark:null}));
 // [code, name, credits, semester, Mech Eng minimum, [[assessment, weight %], ...]]
 const GRADE_SEED=[
   ["26FYF911","Applicable Mathematics 1",20,"1",70,[["Coursework",20],["Exam",80]]],
-  ["26FYF912","Physics",20,"1",null,[["Coursework",40],["Exam",60]]],
+  ["26FYF912","Physics",20,"1",null,[["Coursework",40,PHYS_PARTS],["Exam",60]]],
   ["26FYF944","Chemical Structure and Behaviour",10,"1",null,[["Coursework",20],["Exam",80]]],
   ["26FYF921","Applicable Mathematics 2",20,"2",70,[["Coursework",20],["Exam",80]]],
   ["26FYF922","Engineering Science",20,"2",null,[["Coursework",20],["Exam",80]]],
   ["26FYF941","Programming Applications",10,"2",null,[["Coursework",100]]],
   ["26FYF932","Sustainability in Practice",20,"1+2",null,[["Coursework",100]]]
 ];
-let grades=[];const gEditing=new Set();
+let grades=[];const gEditing=new Set(),gExpanded=new Set();
 const gradesCol=()=>collection(fs,"users",uid,"grades");
 const gradeRef=id=>doc(fs,"users",uid,"grades",id);
 const isNum=v=>typeof v==="number"&&isFinite(v);
@@ -497,20 +518,47 @@ const newId=()=>Math.random().toString(36).slice(2,9);
 const pct=n=>`${Math.round(n*10)/10}%`;
 const up=n=>Math.max(0,Math.ceil(n-1e-9));
 
+async function migrateGrades(){
+  try{
+    const uref=doc(fs,"users",uid);const u=await getDoc(uref);
+    if(u.exists()&&(u.data().gradesV||1)>=2)return;
+    const r=gradeRef("26FYF912");const d=await getDoc(r);
+    if(d.exists()){
+      const comps=(d.data().components||[]).map(c=>({...c}));
+      const cw=comps.find(c=>/coursework/i.test(c.name||"")&&!(c.parts||[]).length&&!isNum(c.mark));
+      if(cw){cw.parts=mkParts(PHYS_PARTS);await updateDoc(r,{components:comps})}
+    }
+    await setDoc(uref,{gradesV:2},{merge:true});
+  }catch(e){console.warn("grades migration skipped",e)}
+}
 async function setupGrades(){
   try{
     const s=await getDocs(gradesCol());if(!s.empty)return;
     const b=writeBatch(fs);
     GRADE_SEED.forEach(([code,name,credits,sem,req,comps],i)=>b.set(gradeRef(code),{code,name,credits,sem,req,order:i,
-      components:comps.map(([n,w])=>({id:newId(),name:n,weight:w,mark:null}))}));
+      components:comps.map(([n,w,ps])=>({id:newId(),name:n,weight:w,mark:null,...(ps?{parts:mkParts(ps)}:{})}))}));
     await b.commit();
   }catch(e){console.warn("grades setup skipped",e)}
 }
 
 /* One module: pts = marks banked (out of 100), remW = weighting still to be marked. */
+/* Every individually marked piece of a module. A component split into parts counts through its parts,
+   with their weights scaled to the component's weight in case they don't quite add up. */
+function leaves(g){
+  const out=[];
+  (g.components||[]).forEach(c=>{const w=+c.weight||0,ps=c.parts||[];
+    if(ps.length){const sp=ps.reduce((a,p)=>a+(+p.weight||0),0);ps.forEach(p=>out.push({c,p,name:p.name,w:sp>0?(+p.weight||0)/sp*w:0,mark:markOf(g,p)}))}
+    else out.push({c,p:null,name:c.name,w,mark:markOf(g,c)})});
+  return out;
+}
+function compAgg(g,c){ // weighted mark of the parts marked so far
+  const ps=c.parts||[];let w=0,pt=0,n=0;ps.forEach(p=>{const m=markOf(g,p),pw=+p.weight||0;if(isNum(m)){w+=pw;pt+=pw*m;n++}});
+  return{mark:w?pt/w:null,marked:n,total:ps.length,sum:ps.reduce((a,p)=>a+(+p.weight||0),0)};
+}
 function modStats(g){
   let wTot=0,doneW=0,pts=0;
-  (g.components||[]).forEach(c=>{const w=+c.weight||0;wTot+=w;const mk=markOf(g,c);if(isNum(mk)){doneW+=w;pts+=w*mk/100}});
+  (g.components||[]).forEach(c=>{wTot+=+c.weight||0});
+  leaves(g).forEach(l=>{if(isNum(l.mark)){doneW+=l.w;pts+=l.w*l.mark/100}});
   const remW=Math.max(0,wTot-doneW);
   const needFor=t=>remW>0?(t-pts)/remW*100:(pts>=t-1e-9?-Infinity:Infinity);
   const minNeed=Math.max(needFor(PASS),g.req?needFor(g.req):-Infinity);
@@ -562,7 +610,7 @@ function aimHTML(m,P){
     const note=s.pts<PASS-1e-9?`Below the ${PASS}% pass mark`:g.req&&s.pts<g.req-1e-9?`Passed, but under the ${g.req}% Mech Eng minimum`:g.req?`Meets the ${g.req}% Mech Eng minimum`:"Passed";
     return`<div class="aim"><span class="a1">Final mark <b>${pct(s.pts)}</b></span><span class="a2">${note}</span></div>`;
   }
-  const rem=comps.filter(c=>markOf(g,c)==null&&(+c.weight||0)>0);
+  const rem=leaves(g).filter(l=>l.mark==null&&l.w>0);
   const where=rem.length===1?`in ${esc(rem[0].name)}`:`across your ${rem.length} remaining assessments`;
   const lines=[];const p=s.needFor(PASS);
   lines.push(p<=0?"Pass already secured":p>100?`Can't reach ${PASS}% any more`:`To pass: ${up(p)}%`);
@@ -573,6 +621,36 @@ function aimHTML(m,P){
     a1=aim<=0?"You've already secured what you need here":`Aim for <b>${up(aim)}%</b> ${where}`}
   else a1=`Aim as high as you can ${where}`;
   return`<div class="aim"><span class="a1">${a1}</span><span class="a2">${lines.join(" · ")}</span></div>`;
+}
+const CHEV=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
+function markInput(g,x,q,cidAttr,kind,label){ // kind "" for a component, "p" for a part
+  const idb=`${esc(g.id)}-${esc(x.id)}`;
+  return whatIf&&!isNum(x.mark)
+    ?`<label class="cmark"><input type="text" inputmode="decimal" class="pred" id="g${kind}p-${idb}" data-g="${kind?"ppred":"pred"}" ${q} ${cidAttr} value="${isPred(g,x)?preds[g.id][x.id]:""}" placeholder="?" aria-label="Predicted mark for ${esc(label)}">%</label>`
+    :`<label class="cmark"><input type="text" inputmode="decimal" id="g${kind}m-${idb}" data-g="${kind?"pmark":"mark"}" ${q} ${cidAttr} value="${isNum(x.mark)?x.mark:""}" placeholder="–" aria-label="Mark for ${esc(label)}">%</label>`;
+}
+function compRow(g,c,q){
+  const ps=c.parts||[],key=`${g.id}:${c.id}`,open=gExpanded.has(key),cid=`data-cid="${esc(c.id)}"`;
+  const a=ps.length?compAgg(g,c):null;
+  const sub=ps.length?`<small>${a.total} part${a.total===1?"":"s"} · ${a.marked} marked</small>`:"";
+  const right=ps.length
+    ?`<span class="cagg${a.mark==null?" none":""}" title="Worked out from its parts">${a.mark==null?"–":pct(a.mark)}</span>`
+    :markInput(g,c,q,cid,"",`${c.name}, ${g.name}`);
+  let h=`<li class="comp"><button type="button" class="cexp${ps.length?" has":""}" data-act="gexp" ${q} ${cid} aria-expanded="${open}" aria-label="${open?"Hide":"Show"} smaller assessments in ${esc(c.name)}">${CHEV}</button>
+      <span class="cn">${esc(c.name)}${sub}</span><span class="cw">${esc(c.weight)}%</span>${right}</li>`;
+  if(open){
+    const rows=ps.map(p=>{const pid=`${cid} data-pid="${esc(p.id)}"`,idb=`${esc(g.id)}-${esc(p.id)}`;
+      return`<li class="part"><input type="text" id="gpn-${idb}" data-g="pname" ${q} ${pid} value="${esc(p.name)}" maxlength="40" aria-label="Name of smaller assessment">
+        <label class="cwi"><input type="text" inputmode="decimal" id="gpw-${idb}" data-g="pweight" ${q} ${pid} value="${esc(p.weight)}" aria-label="Weighting of ${esc(p.name)}, % of module">%</label>
+        ${markInput(g,p,q,pid,"p",`${p.name}, ${g.name}`)}
+        <button type="button" class="xbtn" data-act="pdel" ${q} ${pid} aria-label="Remove ${esc(p.name)}">×</button></li>`}).join("");
+    const cw=+c.weight||0;
+    const note=!ps.length?`Split ${esc(c.name)} into smaller assessments, each with its own weighting and mark.`
+      :Math.abs(a.sum-cw)>1e-9?`<span class="warnt">Parts add up to ${pct(a.sum)} but ${esc(c.name)} is worth ${pct(cw)}. They'll be scaled to fit.</span>`
+      :`Weightings are % of the whole module and add up to ${pct(cw)}.`;
+    h+=`<li class="parts"><ul class="plist">${rows}</ul><div class="pfoot"><button type="button" class="btn sm" data-act="padd" ${q} ${cid}>+ Add smaller assessment</button><span class="phint">${note}</span></div></li>`;
+  }
+  return h;
 }
 function gradeCard(m,P){
   const g=m.g,s=m.s,ed=gEditing.has(g.id),comps=g.components||[];
@@ -596,10 +674,7 @@ function gradeCard(m,P){
       <div class="gedit"><label class="cwi">Credits <input type="text" inputmode="numeric" id="gc-${esc(g.id)}" data-g="credits" ${q} value="${esc(g.credits)}" aria-label="Credits"></label>
         <span style="display:flex;gap:8px"><button type="button" class="btn sm" data-act="gadd" ${q}>+ Add assessment</button><button type="button" class="btn sm primary" data-act="gedit" ${q}>Done</button></span></div>`;
   }else{
-    body=`<ul class="comps">${comps.map(c=>`<li class="comp"><span class="cn">${esc(c.name)}</span><span class="cw">${esc(c.weight)}%</span>
-        ${whatIf&&!isNum(c.mark)
-          ?`<label class="cmark"><input type="text" inputmode="decimal" class="pred" id="gp-${esc(g.id)}-${esc(c.id)}" data-g="pred" ${q} data-cid="${esc(c.id)}" value="${isPred(g,c)?preds[g.id][c.id]:""}" placeholder="?" aria-label="Predicted mark for ${esc(c.name)}, ${esc(g.name)}">%</label>`
-          :`<label class="cmark"><input type="text" inputmode="decimal" id="gm-${esc(g.id)}-${esc(c.id)}" data-g="mark" ${q} data-cid="${esc(c.id)}" value="${isNum(c.mark)?c.mark:""}" placeholder="–" aria-label="Mark for ${esc(c.name)}, ${esc(g.name)}">%</label>`}</li>`).join("")}</ul>`;
+    body=`<ul class="comps">${comps.map(c=>compRow(g,c,q)).join("")}</ul>`;
   }
   const warn=Math.abs(s.wTot-100)>1e-9&&comps.length?`<p class="gwarn">Weightings add up to ${pct(s.wTot)}. They should total 100%.</p>`:"";
   const sem=g.sem==="1+2"?"Sem 1 & 2":`Sem ${esc(g.sem)}`;
@@ -683,7 +758,18 @@ function saveGrade(el){
     render();return}
   if(k==="credits"){const v=Math.round(+raw);if(!(v>0&&v<=120)){el.value=g.credits;toast("Enter credits from 1 to 120.");return}
     if(v!==g.credits)save(updateDoc(gradeRef(g.id),{credits:v}));return}
-  const comps=(g.components||[]).map(c=>({...c}));const c=comps.find(x=>x.id===el.dataset.cid);if(!c)return;
+  const comps=(g.components||[]).map(c=>({...c,...(c.parts?{parts:c.parts.map(p=>({...p}))}:{})}));const c=comps.find(x=>x.id===el.dataset.cid);if(!c)return;
+  if(k[0]==="p"&&k!=="pred"){const pt=(c.parts||[]).find(x=>x.id===el.dataset.pid);if(!pt)return;
+    if(k==="ppred"){const v=raw===""?null:+raw;
+      if(v!==null&&!(isFinite(v)&&v>=0&&v<=100)){el.value="";toast("Enter a mark from 0 to 100.");return}
+      preds[g.id]=preds[g.id]||{};if(v==null)delete preds[g.id][pt.id];else preds[g.id][pt.id]=Math.round(v*10)/10;render();return}
+    if(k==="pmark"){let v=raw===""?null:+raw;
+      if(v!==null&&!(isFinite(v)&&v>=0&&v<=100)){el.value=isNum(pt.mark)?pt.mark:"";toast("Enter a mark from 0 to 100, or leave it blank.");return}
+      if(v!==null)v=Math.round(v*10)/10;if(v===(isNum(pt.mark)?pt.mark:null))return;pt.mark=v}
+    else if(k==="pname"){if(!raw){el.value=pt.name;return}if(raw===pt.name)return;pt.name=raw}
+    else if(k==="pweight"){const v=+raw;if(!(raw!==""&&isFinite(v)&&v>=0&&v<=100)){el.value=pt.weight;toast("Enter a weighting from 0 to 100.");return}
+      if(v===pt.weight)return;pt.weight=v}
+    saveComps(g,comps);return}
   if(k==="mark"){let v=raw===""?null:+raw;
     if(v!==null&&!(isFinite(v)&&v>=0&&v<=100)){el.value=isNum(c.mark)?c.mark:"";toast("Enter a mark from 0 to 100, or leave it blank.");return}
     if(v!==null)v=Math.round(v*10)/10;if(v===(isNum(c.mark)?c.mark:null))return;c.mark=v}
@@ -1080,6 +1166,17 @@ document.addEventListener("click",e=>{
     case"cancelrename":renaming=false;render();break;
     case"gedit":{const id=b.dataset.code;if(gEditing.has(id))gEditing.delete(id);else gEditing.add(id);render();break}
     case"gadd":{const g=grades.find(x=>x.id===b.dataset.code);if(g)saveComps(g,[...(g.components||[]).map(c=>({...c})),{id:newId(),name:"New assessment",weight:0,mark:null}]);break}
+    case"gexp":{const k=`${b.dataset.code}:${b.dataset.cid}`;if(gExpanded.has(k))gExpanded.delete(k);else gExpanded.add(k);render();break}
+    case"padd":{const g=grades.find(x=>x.id===b.dataset.code);if(!g)break;
+      const comps=(g.components||[]).map(c=>({...c,parts:(c.parts||[]).map(p=>({...p}))}));const c=comps.find(x=>x.id===b.dataset.cid);if(!c)break;
+      const left=Math.max(0,(+c.weight||0)-c.parts.reduce((a,p)=>a+(+p.weight||0),0));
+      if(!c.parts.length&&isNum(c.mark))toast(`${c.name}'s mark now comes from its smaller assessments`);
+      c.parts.push({id:newId(),name:c.parts.length?"New assessment":"Part 1",weight:Math.round(left*10)/10,mark:null});
+      comps.forEach(x=>{if(!x.parts.length)delete x.parts});gExpanded.add(`${g.id}:${c.id}`);saveComps(g,comps);break}
+    case"pdel":{const g=grades.find(x=>x.id===b.dataset.code);if(!g)break;
+      const comps=(g.components||[]).map(c=>({...c,...(c.parts?{parts:c.parts.map(p=>({...p}))}:{})}));const c=comps.find(x=>x.id===b.dataset.cid);if(!c||!c.parts)break;
+      const gone=c.parts.find(p=>p.id===b.dataset.pid);c.parts=c.parts.filter(p=>p.id!==b.dataset.pid);if(!c.parts.length)delete c.parts;
+      saveComps(g,comps);if(gone)toast(`Removed ${gone.name}`);break}
     case"gdel":{const g=grades.find(x=>x.id===b.dataset.code);if(g){const gone=(g.components||[]).find(c=>c.id===b.dataset.cid);
       saveComps(g,(g.components||[]).filter(c=>c.id!==b.dataset.cid).map(c=>({...c})));if(gone)toast(`Removed ${gone.name}`)}break}
     case"askdellist":confirmKey="dellist:"+view;render();break;
@@ -1225,7 +1322,7 @@ onAuthStateChanged(auth,user=>{
   unsubs.push(onSnapshot(tasksCol(),s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));ready.tasks=true;render()},onErr));
   unsubs.push(onSnapshot(gradesCol(),s=>{grades=s.docs.map(d=>({id:d.id,...d.data()}));ready.grades=true;render()},onErr));
   unsubs.push(onSnapshot(sessionsCol(),s=>{sessions=s.docs.map(d=>({id:d.id,...d.data()}));render()},onErr));
-  setupModules();setupGrades();tick();
+  setupModules();setupGrades().then(migrateGrades);tick();
 });
 
 /* ---------- misc ---------- */
