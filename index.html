@@ -104,7 +104,7 @@ nav.rail{display:flex;flex-direction:column;gap:14px;min-width:0}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;justify-content:space-around;gap:4px;
   padding:8px max(16px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
   background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
-.tab{flex:1;max-width:120px;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;color:var(--muted);font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.tab{flex:1;min-width:0;max-width:120px;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
 .tab svg{width:24px;height:24px}
 .tab[aria-current="true"]{color:var(--accent)}
 @media (min-width:880px){.tabbar{display:none}}
@@ -129,7 +129,7 @@ main{min-width:0;display:flex;flex-direction:column;gap:18px}
 .btn.sm{padding:5px 11px;font-size:13px;border-radius:10px}
 .btn:disabled{opacity:.6;cursor:default}
 
-input[type=text],input[type=email],input[type=password],input[type=date],select,textarea{width:100%;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-ctl);padding:9px 12px;font-size:16px}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=time],select,textarea{width:100%;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-ctl);padding:9px 12px;font-size:16px}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 textarea{resize:vertical;min-height:72px}
 input::placeholder,textarea::placeholder{color:var(--muted)}
@@ -374,6 +374,53 @@ main.anim .fside>*:nth-child(2){animation-delay:.06s}main.anim .fside>*:nth-chil
 main.anim .bar{transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms + .15s)}
 .confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
 @media (prefers-reduced-motion:reduce){main.anim *{animation:none!important}.fring .rf{transition:none}}
+/* Attendance */
+.donut .rf{stroke-linecap:butt}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);font-weight:500}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px}
+.phead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.bgrid{display:grid;gap:12px}
+@media (min-width:1000px){.bgrid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
+.brow{display:grid;gap:6px}
+.brow+.brow{padding-top:12px;border-top:1px solid var(--line)}
+.btop{display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:0}
+.bname{display:flex;align-items:center;gap:8px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brate{font:700 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.sbar{display:flex;height:10px;border-radius:99px;background:var(--soft);overflow:hidden;gap:2px}
+.sbar span{height:100%;flex:none}
+.bsub{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12.5px;color:var(--muted)}
+.bsub .wt{color:var(--warn);font-weight:600}
+.tchip{font-size:11.5px;background:var(--surface-2);padding:1px 7px;border-radius:6px;color:var(--ink);font-variant-numeric:tabular-nums}
+.tchip b{font-size:10px;letter-spacing:.08em;color:var(--muted);margin-right:2px}
+.ltype{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;flex:none;font:700 13px/1 var(--f-display);letter-spacing:.06em;
+  color:var(--tc);background:color-mix(in srgb,var(--tc) 15%,transparent)}
+.ltype.sm{width:30px;height:22px;border-radius:7px;font-size:11px}
+.lecs .lrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:12px 14px}
+.lbody{display:grid;gap:2px;min-width:0}
+.lt{display:flex;align-items:center;gap:7px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lseg{grid-column:2/-1;justify-self:start}
+.lseg button[aria-pressed="true"].ok{background:var(--ok);color:var(--surface)}
+.lseg button[aria-pressed="true"].no{background:var(--danger);color:var(--surface)}
+.lecs .xbtn{grid-row:1;grid-column:3}
+@media (min-width:640px){.lecs .lrow{grid-template-columns:auto minmax(0,1fr) auto auto}.lseg{grid-column:3;grid-row:1}.lecs .xbtn{grid-column:4}}
+.lec.unmarked{box-shadow:inset 3px 0 0 var(--warn)}
+.lec.upcoming .lt{color:var(--ink)}
+.lconf{padding:0 14px 12px 68px}
+@media (max-width:460px){.lconf{padding-left:14px}}
+.group.needm h2{color:var(--warn)}
+.lfilters{display:flex;overflow-x:auto;scrollbar-width:none}
+.lform{gap:14px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px}
+.lgrid .lwide{grid-column:span 2}
+@media (max-width:400px){.lgrid .lwide{grid-column:1/-1}}
+.lgrid input,.lgrid select{text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink)}
+.lfoot{display:flex;gap:8px;flex-wrap:wrap}
+.nudge{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;cursor:pointer;background:color-mix(in srgb,var(--warn) 13%,var(--surface));color:var(--ink);border-radius:var(--r-card);padding:12px 16px;font-size:14.5px}
+.nudge .go{margin-left:auto;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);white-space:nowrap}
+main.anim .bgrid>*,main.anim .nudge{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+main.anim .bgrid>*:nth-child(2){animation-delay:.06s}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -974,13 +1021,131 @@ let animNext=true;
 function playAnim(){const m=$("#main");if(!animNext||!m)return;animNext=false;
   m.classList.remove("anim");void m.offsetWidth;m.classList.add("anim");clearTimeout(playAnim.h);playAnim.h=setTimeout(()=>m.classList.remove("anim"),1400)}
 
+/* ---------- attendance ---------- */
+const LTYPES=[["Lecture","Lectures","LEC","var(--accent)"],["Tutorial","Tutorials","TUT","var(--c3)"],["Lab","Labs","LAB","var(--c5)"],["Other","Other","OTH","var(--muted)"]];
+const ltype=t=>LTYPES.find(x=>x[0]===t)||LTYPES[3];
+let lectures=[];
+const lecturesCol=()=>collection(fs,"users",uid,"lectures");
+const lecRef=id=>doc(fs,"users",uid,"lectures",id);
+let lecForm=null,lecFilter="all",lecConfirm=null,lecShowAdd=false,lecHistAll=false;
+function lecDefault(){const m=lists.find(l=>l.kind==="module");return{list:m?m.id:"",type:"Lecture",date:todayISO(),start:"09:00",end:"10:00",room:"",repeat:"1"}}
+const lecWhen=l=>`${l.date}T${l.start||"00:00"}`;
+const nowStamp=()=>{const d=new Date();return`${iso(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
+/* A session that has started but you haven't marked is "unmarked"; one still to come is "upcoming". */
+function lecState(l){if(l.status==="attended")return"attended";if(l.status==="absent")return"absent";return lecWhen(l)<=nowStamp()?"unmarked":"upcoming"}
+function tally(arr){const t={attended:0,absent:0,unmarked:0,upcoming:0};arr.forEach(l=>t[lecState(l)]++);
+  t.marked=t.attended+t.absent;t.rate=t.marked?t.attended/t.marked*100:null;return t}
+const rateCol=r=>r==null?"var(--muted)":r>=90?"var(--ok)":r>=75?"var(--warn)":"var(--danger)";
+const SEGCOL={attended:"var(--ok)",absent:"var(--danger)",unmarked:"var(--warn)"};
+function donut(segs,size,stroke,inner){
+  const total=segs.reduce((a,s)=>a+s.v,0),r=50-stroke/2,live=segs.filter(s=>s.v>0),gap=live.length>1?1.4:0;let off=0;
+  const arcs=live.map(s=>{const len=s.v/total*100,dl=Math.max(.01,len-gap);
+    const a=`<circle class="rf" cx="50" cy="50" r="${r}" stroke-width="${stroke}" pathLength="100" stroke-dasharray="${dl} ${100-dl}" stroke-dashoffset="${-off}" style="stroke:${s.color}"/>`;off+=len;return a}).join("");
+  return`<div class="ring donut" style="width:${size}px;height:${size}px"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="rt" cx="50" cy="50" r="${r}" stroke-width="${stroke}"/>${arcs}</svg><div class="ri">${inner}</div></div>`;
+}
+function stackBar(t){
+  const tot=t.attended+t.absent+t.unmarked;
+  if(!tot)return`<div class="sbar"></div>`;
+  return`<div class="sbar">${["attended","absent","unmarked"].map(k=>t[k]?`<span style="width:${t[k]/tot*100}%;background:${SEGCOL[k]}"></span>`:"").join("")}</div>`;
+}
+const rateTxt=t=>t.rate==null?"–":`${Math.round(t.rate)}%`;
+function lecDay(d){const t=todayISO();return d===t?"Today":d===addDays(t,1)?"Tomorrow":d===addDays(t,-1)?"Yesterday":fmtDay(d)}
+function lecRow(l){
+  const li=listById(l.list),st=lecState(l),ty=ltype(l.type);
+  const when=`${lecDay(l.date)} · ${esc(l.start||"")}${l.end?`–${esc(l.end)}`:""}${l.room?` · ${esc(l.room)}`:""}`;
+  const series=l.series?lectures.filter(x=>x.series===l.series).length:1;
+  const conf=lecConfirm===l.id?`<div class="lconf inline-confirm"><span>Delete this ${esc(ty[0].toLowerCase())}?</span>
+      <button type="button" class="btn danger solid sm" data-act="ldelone" data-lid="${esc(l.id)}">Delete</button>
+      ${series>1?`<button type="button" class="btn danger sm" data-act="ldelall" data-lid="${esc(l.id)}">Delete all ${series} in series</button>`:""}
+      <button type="button" class="btn sm" data-act="lcancel">Keep</button></div>`:"";
+  return`<li class="lec ${st}"><div class="lrow">
+      <span class="ltype" style="--tc:${ty[3]}">${ty[2]}</span>
+      <div class="lbody"><span class="lt"><i class="dot" style="background:${li?colorOf(li):"var(--muted)"}"></i>${esc(li?li.name:"No module")}</span><span class="lm">${when}</span></div>
+      <div class="seg lseg" role="group" aria-label="Mark ${esc(ty[0])} on ${esc(lecDay(l.date))}">
+        <button type="button" class="ok" data-act="lmark" data-s="attended" data-lid="${esc(l.id)}" aria-pressed="${l.status==="attended"}">Attended</button>
+        <button type="button" class="no" data-act="lmark" data-s="absent" data-lid="${esc(l.id)}" aria-pressed="${l.status==="absent"}">Absent</button></div>
+      <button type="button" class="xbtn" data-act="ldelask" data-lid="${esc(l.id)}" aria-label="Delete this session">×</button></div>${conf}</li>`;
+}
+function attendNavValue(){if(!ready.lectures||!lectures.length)return"";const t=tally(lectures);return t.rate==null?"":`${Math.round(t.rate)}%`}
+function renderAttendance(){
+  if(!lecForm)lecForm=lecDefault();
+  const all=[...lectures].sort((a,b)=>lecWhen(a)<lecWhen(b)?-1:lecWhen(a)>lecWhen(b)?1:0);
+  const T=tally(all);
+  const typesPresent=LTYPES.filter(t=>all.some(l=>ltype(l.type)[0]===t[0]));
+  if(lecFilter!=="all"&&!typesPresent.some(t=>t[0]===lecFilter))lecFilter="all";
+  const shown=lecFilter==="all"?all:all.filter(l=>ltype(l.type)[0]===lecFilter);
+  // Hero
+  const stat=(v,l,col)=>`<div class="stat"><span class="v" style="${v&&col?`color:${col}`:""}">${v}</span><span class="label">${l}</span></div>`;
+  const hero=`<section class="hero" aria-label="Attendance summary">
+      ${donut([{v:T.attended,color:SEGCOL.attended},{v:T.absent,color:SEGCOL.absent},{v:T.unmarked,color:SEGCOL.unmarked}],140,11,
+        `<b style="font-size:38px;color:${rateCol(T.rate)}">${T.rate==null?"–":`${Math.round(T.rate)}<small>%</small>`}</b><span>Attended</span>`)}
+      <div class="stats">${stat(T.attended,"Attended",SEGCOL.attended)}${stat(T.absent,"Absent",SEGCOL.absent)}${stat(T.unmarked,"Not marked",SEGCOL.unmarked)}${stat(T.upcoming,"Upcoming","")}</div></section>`;
+  // Breakdown by type and by module
+  const brow=(label,dot,t,extra)=>`<div class="brow"><div class="btop"><span class="bname">${dot}${label}</span><span class="brate" style="color:${rateCol(t.rate)}">${rateTxt(t)}</span></div>
+      ${stackBar(t)}<div class="bsub"><span>${t.attended} attended</span><span>${t.absent} absent</span>${t.unmarked?`<span class="wt">${t.unmarked} not marked</span>`:""}${extra||""}</div></div>`;
+  const byType=typesPresent.map(ty=>{const t=tally(all.filter(l=>ltype(l.type)[0]===ty[0]));
+    return brow(esc(ty[1]),`<span class="ltype sm" style="--tc:${ty[3]}">${ty[2]}</span>`,t)}).join("");
+  const modIds=[...new Set(all.map(l=>l.list||""))].sort((a,b)=>{const la=listById(a),lb=listById(b);return sortLists(la||{kind:"z"},lb||{kind:"z"})});
+  const byMod=modIds.map(id=>{const li=listById(id),ms=all.filter(l=>(l.list||"")===id),t=tally(ms);
+    const per=LTYPES.map(ty=>{const tt=tally(ms.filter(l=>ltype(l.type)[0]===ty[0]));return tt.marked||tt.unmarked||tt.upcoming?`<span class="tchip"><b>${ty[2]}</b> ${tt.marked?`${tt.attended}/${tt.marked}`:"–"}</span>`:""}).join("");
+    return brow(esc(li?li.name:"No module"),`<i class="dot" style="background:${li?colorOf(li):"var(--muted)"}"></i>`,t,per)}).join("");
+  const legend=`<div class="legend"><span><i style="background:${SEGCOL.attended}"></i>Attended</span><span><i style="background:${SEGCOL.absent}"></i>Absent</span><span><i style="background:${SEGCOL.unmarked}"></i>Not marked</span></div>`;
+  const breakdown=all.length?`<div class="bgrid"><section class="panel"><div class="phead"><p class="label">By type</p>${legend}</div>${byType}</section>
+      <section class="panel"><p class="label">By module</p>${byMod}</section></div>`:"";
+  // Add form
+  const modOpts=["module","list"].map(k=>{const xs=lists.filter(x=>(k==="module")===(x.kind==="module"));if(!xs.length)return"";
+    return`<optgroup label="${k==="module"?"Modules":"To-do lists"}">${xs.map(x=>`<option value="${esc(x.id)}"${x.id===lecForm.list?" selected":""}>${esc(x.name)}</option>`).join("")}</optgroup>`}).join("");
+  const reps=[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option value="${n}"${String(n)===String(lecForm.repeat)?" selected":""}>${n===1?"Just once":`Weekly for ${n} weeks`}</option>`).join("");
+  const form=lecShowAdd?`<form class="panel lform" id="lecForm">
+      <p class="label">Add sessions</p>
+      <div class="seg big" role="group" aria-label="Type">${LTYPES.map(t=>`<button type="button" data-act="ltype" data-t="${t[0]}" aria-pressed="${lecForm.type===t[0]}">${t[0]}</button>`).join("")}</div>
+      <div class="lgrid">
+        <label class="flabel lwide">Module<select id="lf-list">${modOpts}</select></label>
+        <label class="flabel">Date<input type="date" id="lf-date" value="${esc(lecForm.date)}" required></label>
+        <label class="flabel">Starts<input type="time" id="lf-start" value="${esc(lecForm.start)}" required></label>
+        <label class="flabel">Ends<input type="time" id="lf-end" value="${esc(lecForm.end)}"></label>
+        <label class="flabel">Room<input type="text" id="lf-room" value="${esc(lecForm.room)}" maxlength="40" placeholder="Optional"></label>
+        <label class="flabel lwide">Repeats<select id="lf-repeat">${reps}</select></label>
+      </div>
+      <div class="lfoot"><button type="submit" class="btn primary">${+lecForm.repeat>1?`Add ${lecForm.repeat} ${esc(ltype(lecForm.type)[1].toLowerCase())}`:`Add ${esc(lecForm.type.toLowerCase())}`}</button><button type="button" class="btn ghost" data-act="laddtoggle">Cancel</button></div>
+    </form>`:"";
+  // Lists
+  const need=shown.filter(l=>lecState(l)==="unmarked").reverse();
+  const up=shown.filter(l=>lecState(l)==="upcoming");const upSoon=up.filter(l=>l.date<=addDays(todayISO(),13));
+  const hist=shown.filter(l=>l.status).reverse();const histShown=lecHistAll?hist:hist.slice(0,12);
+  const sec=(title,cls,items,more)=>items.length?`<section class="group ${cls}"><h2>${title}<span class="n">${items.length}</span></h2><ul class="tasks lecs">${items.map(lecRow).join("")}</ul>${more||""}</section>`:"";
+  const filters=typesPresent.length>1?`<div class="seg" role="group" aria-label="Filter by type"><button type="button" data-act="lfilter" data-t="all" aria-pressed="${lecFilter==="all"}">All</button>${typesPresent.map(t=>`<button type="button" data-act="lfilter" data-t="${t[0]}" aria-pressed="${lecFilter===t[0]}">${t[1]}</button>`).join("")}</div>`:"";
+  const empty=!all.length?`<div class="empty"><strong>No sessions yet</strong>Add your lectures, tutorials and labs from your timetable. Set them to repeat weekly and you only enter each one once.</div>`:"";
+  const h=`<div class="vhead"><div><h1>Attendance</h1><p class="sub">${all.length} session${all.length===1?"":"s"} · ${T.marked} marked</p></div>
+      <div class="vtools">${lecShowAdd?"":`<button type="button" class="btn primary" data-act="laddtoggle">+ Add sessions</button>`}</div></div>
+    ${all.length?hero:""}${form}${breakdown}${empty}
+    ${filters?`<div class="lfilters">${filters}</div>`:""}
+    ${sec("Needs marking","needm",need)}
+    ${sec("Coming up · 2 weeks","",upSoon,up.length>upSoon.length?`<p class="gnote">${up.length-upSoon.length} more later in the term.</p>`:"")}
+    ${sec("History","",histShown,hist.length>histShown.length?`<button type="button" class="btn ghost doneToggle" data-act="lhist">Show all ${hist.length}</button>`:"")}`;
+  setMain(h);
+}
+async function addLectures(){
+  const f=lecForm;
+  if(!validDate(f.date)||!f.date){toast("Pick a date for the session.");return}
+  if(!/^\d{2}:\d{2}$/.test(f.start||"")){toast("Pick a start time.");return}
+  if(f.end&&f.end<=f.start){toast("The end time needs to be after the start time.");return}
+  const n=Math.max(1,Math.min(12,+f.repeat||1)),series=n>1?newId():"",b=writeBatch(fs);
+  for(let i=0;i<n;i++)b.set(doc(lecturesCol()),{list:f.list||"",type:f.type,date:addDays(f.date,7*i),start:f.start,end:f.end||"",room:(f.room||"").trim(),status:null,series,created:Date.now()+i});
+  save(b.commit());
+  const li=listById(f.list);toast(`Added ${n} ${n>1?ltype(f.type)[1].toLowerCase():f.type.toLowerCase()}${li?` for ${li.name}`:""}`);
+  lecForm={...lecDefault(),list:f.list,type:f.type,date:f.date};lecShowAdd=false;render();
+}
+function needsMarkingCount(){return ready.lectures?lectures.filter(l=>lecState(l)==="unmarked").length:0}
+
 /* ---------- render ---------- */
 const svg=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const ICONS={
   upcoming:svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
   grades:svg('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
   inbox:svg('<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>'),
-  focus:svg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2h5M12 2v3M19 6l1.5-1.5"/>')
+  focus:svg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2h5M12 2v3M19 6l1.5-1.5"/>'),
+  attend:svg('<rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18M8.5 15.5l2.5 2.5 4.5-4.5"/>')
 };
 /* WHOOP-style ring gauge. v = 0-100 fill, colour is any CSS colour or var(). */
 function ring(v,size,stroke,color,inner){
@@ -991,13 +1156,13 @@ function renderNav(){
   const total=tasks.filter(t=>!t.done).length;
   const btn=(id,name,color,n,cls="")=>`<button class="navbtn ${cls}" data-act="view" data-id="${esc(id)}" aria-current="${view===id}">${ICONS[id]?`<span class="ic">${ICONS[id]}</span>`:""}${color?`<span class="dot" style="background:${color}"></span>`:""}<span class="nm">${esc(name)}</span>${n===""?"":`<span class="n">${n}</span>`}</button>`;
   const mods=lists.filter(l=>l.kind==="module"),other=lists.filter(l=>l.kind!=="module");
-  let h=btn("upcoming","Overview","",total,"prim")+btn("focus","Focus","",`<span data-timer>${timer?mmss(remaining()):""}</span>`,"prim")+btn("grades","Grades","",gradesNavValue(),"prim")+btn("inbox","Inbox","",openCount("inbox"),"prim");
+  let h=btn("upcoming","Overview","",total,"prim")+btn("focus","Focus","",`<span data-timer>${timer?mmss(remaining()):""}</span>`,"prim")+btn("grades","Grades","",gradesNavValue(),"prim")+btn("attend","Attendance","",attendNavValue(),"prim")+btn("inbox","Inbox","",openCount("inbox"),"prim");
   h+=`<div class="navgroup"><span class="navhead">Modules</span>${mods.map(l=>btn(l.id,l.name,colorOf(l),openCount(l.id))).join("")}</div>`;
   h+=`<div class="navgroup"><span class="navhead">To-do lists</span>${other.map(l=>btn(l.id,l.name,colorOf(l),openCount(l.id))).join("")}</div>`;
   h+=`<button class="navbtn add" data-act="newlist" type="button">+ New list</button>`;
   $("#nav").innerHTML=h;
   const tab=(id,name)=>`<button class="tab" data-act="view" data-id="${id}" aria-current="${view===id}">${ICONS[id]}<span>${name}</span></button>`;
-  $("#tabbar").innerHTML=tab("upcoming","Overview")+(timer?`<button class="tab" data-act="view" data-id="focus" aria-current="${view==="focus"}">${ICONS.focus}<span data-timer class="live">${mmss(remaining())}</span></button>`:tab("focus","Focus"))+tab("grades","Grades")+tab("inbox","Inbox");
+  $("#tabbar").innerHTML=tab("upcoming","Overview")+(timer?`<button class="tab" data-act="view" data-id="focus" aria-current="${view==="focus"}">${ICONS.focus}<span data-timer class="live">${mmss(remaining())}</span></button>`:tab("focus","Focus"))+tab("grades","Grades")+tab("attend","Attend")+tab("inbox","Inbox");
 }
 function taskHTML(t,showList){
   const l=listById(t.list);const cls=["task",t.done?"done":"",t.prio==="high"?"high":""].join(" ");
@@ -1059,6 +1224,7 @@ function renderMain(){
   const m=$("#main");
   if(view==="grades"){if(ready.grades)renderGrades();return}
   if(view==="focus"){if(ready.lists&&ready.tasks)renderFocus();return}
+  if(view==="attend"){if(ready.lists&&ready.lectures)renderAttendance();return}
   if(!(ready.lists&&ready.tasks))return;
   if(view!=="upcoming"&&view!=="inbox"&&!listById(view))view="upcoming";
   const cur=view==="upcoming"?{name:"Overview"}:view==="inbox"?INBOX:listById(view);
@@ -1079,7 +1245,9 @@ function renderMain(){
       :`<button class="btn ghost" data-act="rename">Edit name</button><button class="btn ghost" data-act="askdellist">Delete list</button>`}</div>`}
   h+=`</div>`;
   h+=summaryHTML(mine);
-  if(view==="upcoming")h+=activityHTML();
+  if(view==="upcoming"){const nm=needsMarkingCount();
+    if(nm)h+=`<button type="button" class="nudge" data-act="view" data-id="attend"><span class="ltype sm" style="--tc:var(--warn)">!</span><span><b>${nm} session${nm===1?"":"s"}</b> to mark as attended or absent</span><span class="go">Attendance →</span></button>`;
+    h+=activityHTML()}
 
   h+=`<form class="qa" id="qa"><div class="top"><input type="text" id="qa-title" placeholder="Add a task… try &quot;lab report fri #physics !&quot;" maxlength="200" autocomplete="off" enterkeyhint="done" aria-describedby="qa-preview"><button class="btn primary" type="submit">Add</button></div>
     <div class="qprev" id="qa-preview" aria-live="polite" hidden></div>
@@ -1117,7 +1285,7 @@ function renderMain(){
 }
 let pendingRender=false;
 /* Don't redraw under someone mid-way through typing a date or a mark. */
-const holdsRender=a=>!!a&&$("#main").contains(a)&&(a.type==="date"||a.dataset.g!==undefined);
+const holdsRender=a=>!!a&&$("#main").contains(a)&&(a.type==="date"||a.type==="time"||a.dataset.g!==undefined);
 function render(){
   renderNav();
   if(holdsRender(document.activeElement)){pendingRender=true;return}
@@ -1139,6 +1307,20 @@ document.addEventListener("click",e=>{
         const dueNow=x=>x.due&&diffDays(x.due)<=0;
         if(dueNow(t)&&!tasks.some(x=>!x.done&&x.id!==t.id&&dueNow(x))){celebrate();toast("Day cleared. Nothing left due today.")}}
       save(updateDoc(taskRef(t.id),{done,doneAt:done?Date.now():null}))}break;
+    case"laddtoggle":lecShowAdd=!lecShowAdd;if(lecShowAdd&&!lecForm)lecForm=lecDefault();render();if(lecShowAdd){const f=$("#lecForm");f&&f.scrollIntoView({block:"nearest",behavior:"smooth"})}break;
+    case"ltype":lecForm.type=b.dataset.t;render();break;
+    case"lfilter":lecFilter=b.dataset.t;render();break;
+    case"lhist":lecHistAll=!lecHistAll;render();break;
+    case"lmark":{const l=lectures.find(x=>x.id===b.dataset.lid);if(!l)break;const st=l.status===b.dataset.s?null:b.dataset.s;
+      try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}
+      save(updateDoc(lecRef(l.id),{status:st,markedAt:st?Date.now():null}));break}
+    case"ldelask":lecConfirm=b.dataset.lid;render();break;
+    case"lcancel":lecConfirm=null;render();break;
+    case"ldelone":{lecConfirm=null;save(deleteDoc(lecRef(b.dataset.lid)));toast("Session deleted");break}
+    case"ldelall":{const l=lectures.find(x=>x.id===b.dataset.lid);lecConfirm=null;if(!l)break;
+      const xs=lectures.filter(x=>x.series&&x.series===l.series);
+      for(let i=0;i<xs.length;i+=450){const bt=writeBatch(fs);xs.slice(i,i+450).forEach(x=>bt.delete(lecRef(x.id)));save(bt.commit())}
+      toast(`Deleted ${xs.length} sessions`);break}
     case"fdur":focusSel.dur=+b.dataset.m;ls.set("dt.focusSel",focusSel);render();break;
     case"fstart":startTimer();break;
     case"fpause":pauseTimer();break;
@@ -1203,6 +1385,7 @@ document.addEventListener("change",e=>{
   const el=e.target;
   if(el.id==="qa-due"){if(validDate(el.value)){qa.due=el.value;syncQaChips()}return}
   if(el.id==="qa-list"){qa.list=el.value;return}
+  if(el.id&&el.id.startsWith("lf-")){lecForm[el.id.slice(3)]=el.value;if(el.id==="lf-repeat")render();return}
   if(el.id==="f-list"){focusSel.list=el.value;focusSel.task="";ls.set("dt.focusSel",focusSel);render();return}
   if(el.id==="f-task"){focusSel.task=el.value;ls.set("dt.focusSel",focusSel);render();return}
   if(el.dataset.g!==undefined){saveGrade(el);return}
@@ -1217,7 +1400,11 @@ document.addEventListener("focusout",e=>{
   }
   if(pendingRender)setTimeout(()=>{if(!holdsRender(document.activeElement))render()},0);
 });
-document.addEventListener("input",e=>{if(e.target.id==="qa-title")quickPreview()});
+document.addEventListener("input",e=>{const el=e.target;if(el.id==="qa-title")quickPreview();
+  if(el.id&&el.id.startsWith("lf-")&&lecForm){lecForm[el.id.slice(3)]=el.value;
+    if(el.id==="lf-start"&&/^\d{2}:\d{2}$/.test(el.value)){const[h,m]=el.value.split(":").map(Number);const e2=`${pad(Math.min(23,h+1))}:${pad(m)}`;
+      if(!lecForm.endEdited){lecForm.end=e2;const en=$("#lf-end");if(en)en.value=e2}}
+    if(el.id==="lf-end")lecForm.endEdited=true}});
 document.addEventListener("keydown",e=>{
   const tg=e.target,typing=tg&&(tg.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName));
   if(!typing&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&e.key==="n"&&$("#qa-title")){e.preventDefault();$("#qa-title").focus()}
@@ -1230,6 +1417,7 @@ document.addEventListener("submit",e=>{
   const f=e.target;
   if(f.id==="emailForm")return; // handled below
   e.preventDefault();if(!uid)return;
+  if(f.id==="lecForm"){addLectures();return}
   if(f.id==="qa"){const inp=$("#qa-title");if(!inp.value.trim())return;const pq=parseQuick(inp.value);const title=pq.title;
     const dv=$("#qa-due")?$("#qa-due").value:"";qa.due=validDate(dv)?dv:"";
     const isList=view!=="upcoming"&&view!=="inbox";let list=isList?view:(view==="inbox"?"":($("#qa-list")?$("#qa-list").value:""));
@@ -1308,7 +1496,7 @@ function sortLists(a,b){
   return(a.created||0)-(b.created||0);
 }
 
-function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];grades=[];sessions=[];preds={};whatIf=false;gEditing.clear();ready={lists:false,tasks:false,grades:false};openId=null;confirmKey=null}
+function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];grades=[];sessions=[];lectures=[];lecConfirm=null;lecForm=null;preds={};whatIf=false;gEditing.clear();ready={lists:false,tasks:false,grades:false,lectures:false};openId=null;confirmKey=null}
 onAuthStateChanged(auth,user=>{
   stop();
   if(!user){uid=null;$("#appView").hidden=true;$("#tabbar").hidden=true;$("#authView").hidden=false;return}
@@ -1322,6 +1510,7 @@ onAuthStateChanged(auth,user=>{
   unsubs.push(onSnapshot(tasksCol(),s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));ready.tasks=true;render()},onErr));
   unsubs.push(onSnapshot(gradesCol(),s=>{grades=s.docs.map(d=>({id:d.id,...d.data()}));ready.grades=true;render()},onErr));
   unsubs.push(onSnapshot(sessionsCol(),s=>{sessions=s.docs.map(d=>({id:d.id,...d.data()}));render()},onErr));
+  unsubs.push(onSnapshot(lecturesCol(),s=>{lectures=s.docs.map(d=>({id:d.id,...d.data()}));ready.lectures=true;render()},onErr));
   setupModules();setupGrades().then(migrateGrades);tick();
 });
 
