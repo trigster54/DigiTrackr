@@ -1308,6 +1308,8 @@ function lecSaveField(el){
 
 // Week, weekday (0=Mon), start-end, module, attended (y/n). From your Attendance.xlsx, weeks 1–4.
 const ATT_SEED=["1009001000M1y","1014001700Py","1109001000Py","1111001200Ty","1113001400Py","1114001500M1y","1309001000Py","1310001200M1y","1315001600Cy","1411001300Cy","1414001500Py","2010001300Py","2109001000Pn","2114001500M1y","2117001800M1y","2209001000Sy","2210001100Py","2211001200M1y","2212001300Py","2309001000Pn","2310001200M1n","2315001600Cy","2411001300Cy","2414001500Py","3009001000M1y","3011001300Py","3016001700Sy","3109001000Py","3113001400Py","3114001500M1y","3117001800M1y","3209001000Py","3211001200Sy","3212001300Py","3309001000Pn","3310001200M1n","3313001400Sn","3315001600Cn","3411001300Cn","3414001500Pn","4009001000M1y","4011001300Py","4109001000Pn","4113001400Py","4114001500M1y","4117001800M1n","4209001000Pn","4210001200Sn","4212001300Pn"];
+// Weeks 5–9 you sent in chat (29 Oct – 24 Nov): date|start|end|code|attended y/n
+const ATT_SEED2=["2026-10-29|10:00|12:00|FYF911|n","2026-10-29|15:00|16:00|FYF944|y","2026-10-29|13:00|14:00|FYF932|n","2026-10-30|11:00|13:00|FYF944|y","2026-10-30|14:00|15:00|FYF912|y","2026-10-30|15:00|16:00|FYF944|y","2026-11-02|09:00|10:00|FYF911|n","2026-11-02|16:00|17:00|FYF932|n","2026-11-03|09:00|11:00|FYF912|y","2026-11-03|13:00|14:00|FYF912|y","2026-11-03|14:00|15:00|FYF911|y","2026-11-03|17:00|18:00|FYF911|n","2026-11-04|12:00|13:00|FYF932|y","2026-11-05|09:00|10:00|FYF912|y","2026-11-05|10:00|12:00|FYF911|y","2026-11-05|15:00|16:00|FYF944|y","2026-11-06|11:00|13:00|FYF944|n","2026-11-06|14:00|15:00|FYF912|n","2026-11-06|15:00|16:00|FYF944|y","2026-11-06|16:00|18:00|FYF932|n","2026-11-16|09:00|10:00|FYF911|n","2026-11-17|09:00|10:00|FYF912|n","2026-11-17|13:00|14:00|FYF912|n","2026-11-17|14:00|15:00|FYF911|y","2026-11-17|15:00|16:00|FYQ002|y","2026-11-17|16:00|17:00|FY1002|n","2026-11-17|17:00|18:00|FYF911|n","2026-11-18|10:00|12:00|FYF932|n","2026-11-18|12:00|13:00|FYF912|n","2026-11-19|09:00|10:00|FYF912|n","2026-11-19|10:00|12:00|FYF911|n","2026-11-19|13:00|15:00|FYF912|y","2026-11-19|15:00|16:00|FYF944|y","2026-11-20|11:00|13:00|FYF944|n","2026-11-20|14:00|15:00|FYF912|y","2026-11-23|09:00|10:00|FYF911|n","2026-11-24|09:00|10:00|FYF912|n","2026-11-24|13:00|14:00|FYF912|n","2026-11-24|14:00|15:00|FYF911|y","2026-11-24|17:00|18:00|FYF911|n"];
 const SEED_MOD={M1:"Applicable Maths 1",P:"Physics",C:"Chemistry",S:"Sustainability in Practice",T:"Personal Tutor"};
 let seedTried=false;
 /* Runs once per account: adds the spreadsheet sessions with fixed ids, so two devices can't add them twice. */
@@ -1316,19 +1318,24 @@ async function seedAttendance(){
   seedTried=true;
   try{
     const uref=doc(fs,"users",uid);const u=await getDoc(uref);
-    if(u.exists()&&(u.data().attendV||0)>=1)return;
-    const rows=ATT_SEED.map(x=>{const week=+x[0],day=+x[1],start=`${x.slice(2,4)}:${x.slice(4,6)}`,end=`${x.slice(6,8)}:${x.slice(8,10)}`;
+    const v=u.exists()?(u.data().attendV||0):0;if(v>=2)return;
+    const rows1=v>=1?[]:ATT_SEED.map(x=>{const week=+x[0],day=+x[1],start=`${x.slice(2,4)}:${x.slice(4,6)}`,end=`${x.slice(6,8)}:${x.slice(8,10)}`;
       const comp=SEED_MOD[x.slice(10,-1)],mod=matchModule(comp);
       return{id:`seed-${x.slice(0,10)}${x.slice(10,-1)}`,comp,list:mod?mod.id:"",label:mod?"":comp,week,day,fixedDate:null,start,end,room:"",
         type:guessType(comp,mod,start,end,"",day),status:x.slice(-1)==="y"?"attended":"absent"}});
-    const imp={rows,week1:"2026-09-28"};importDates(imp);
+    const imp={rows:rows1,week1:"2026-09-28"};importDates(imp);
+    // Second batch (weeks 5–9) already has real dates
+    const rows2=ATT_SEED2.map(x=>{const[date,start,end,code,st]=x.split("|");const mod=matchModule(code),wd=(parse(date).getDay()+6)%7;
+      return{id:`seed2-${date}${start.replace(":","")}${code}`,comp:code,list:mod?mod.id:"",label:mod?"":code,week:0,day:wd,date,start,end,room:"",
+        type:guessType(code,mod,start,end,"",wd),status:st==="y"?"attended":"absent"}});
+    const rows=[...rows1,...rows2];
     const have=new Set(lectures.map(lecKey)),fresh=rows.filter(r=>!have.has(lecKey(r)));
     const b=writeBatch(fs);
     fresh.forEach((r,j)=>b.set(lecRef(r.id),{list:r.list,label:r.label,type:r.type,date:r.date,start:r.start,end:r.end,room:"",status:r.status,typeGuessed:true,
       markedAt:Date.now(),series:`imp-${r.list||norm(r.label)}-${parse(r.date).getDay()}-${r.start.replace(":","")}-${r.end.replace(":","")}`,created:Date.now()+j}));
-    b.set(uref,{attendV:1},{merge:true});
+    b.set(uref,{attendV:2},{merge:true});
     await b.commit();
-    if(fresh.length){toast(`Added ${fresh.length} sessions from your attendance spreadsheet`);animNext=true}
+    if(fresh.length){toast(`Added ${fresh.length} past session${fresh.length===1?"":"s"} to your attendance`);animNext=true}
   }catch(e){seedTried=false;console.warn("attendance seed skipped",e)}
 }
 /* ---------- render ---------- */
