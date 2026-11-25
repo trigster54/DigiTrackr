@@ -421,6 +421,24 @@ main.anim .bar{transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,
 .nudge .go{margin-left:auto;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);white-space:nowrap}
 main.anim .bgrid>*,main.anim .nudge{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
 main.anim .bgrid>*:nth-child(2){animation-delay:.06s}
+/* Attendance import + editing */
+.ver{font-size:11px;color:var(--muted);opacity:.7;letter-spacing:.04em}
+button.lbody{border:0;background:none;padding:0;text-align:left;color:inherit;cursor:pointer;font:inherit}
+button.lbody:hover .lt{color:var(--accent)}
+.ledit{display:grid;gap:12px;padding:4px 14px 16px 68px}
+@media (max-width:460px){.ledit{padding-left:14px}}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.limp{border:2px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.limpsum{margin:0;font-size:15px;color:var(--muted)}
+.limpsum b{font-size:28px;color:var(--ink);margin-right:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips:empty{display:none}
+.tchip.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok);font-weight:600}
+.tchip.no{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);font-weight:600}
+.limpnotes{padding-left:18px;display:grid;gap:4px;margin:0}
+.limpnotes .wt{color:var(--warn)}
+.btn:disabled{opacity:.5}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -456,7 +474,7 @@ main.anim .bgrid>*:nth-child(2){animation-delay:.06s}
         <p class="today-line" id="todayLine"></p>
         <p class="offline" id="offline" hidden>Offline. Changes will sync when you reconnect.</p>
       </div>
-      <div class="acct"><span id="acctName"></span><button class="linkbtn" data-act="signout" type="button">Sign out</button></div>
+      <div class="acct"><span id="acctName"></span><button class="linkbtn" data-act="signout" type="button">Sign out</button><span class="ver" id="appVer"></span></div>
     </div>
     <div class="navscroll" id="nav"></div>
     <form class="newlist" id="newList" hidden>
@@ -532,7 +550,9 @@ const listRef=id=>doc(fs,"users",uid,"lists",id);
 
 const listById=id=>lists.find(l=>l.id===id);
 const INBOX={id:"inbox",name:"Inbox",kind:"inbox",color:-1};
-const colorOf=l=>l&&l.color>=0?`var(--c${l.color%7})`:"var(--muted)";
+/* Your seven modules get fixed, distinct colours from their codes; other lists use their saved colour. */
+const colorOf=l=>{if(!l)return"var(--muted)";const mi=l.code?MODULES.findIndex(m=>m[0]===l.code):-1;
+  if(mi>=0)return`var(--c${mi%7})`;return l.color>=0?`var(--c${l.color%7})`:"var(--muted)"};
 const prioRank={high:0,normal:1,low:2};
 function sortOpen(a,b){const ad=a.due||"9999",bd=b.due||"9999";if(ad!==bd)return ad<bd?-1:1;
   const p=(prioRank[a.prio]??1)-(prioRank[b.prio]??1);if(p)return p;return(a.created||0)-(b.created||0)}
@@ -1060,11 +1080,11 @@ function lecRow(l){
       <button type="button" class="btn sm" data-act="lcancel">Keep</button></div>`:"";
   return`<li class="lec ${st}"><div class="lrow">
       <span class="ltype" style="--tc:${ty[3]}">${ty[2]}</span>
-      <div class="lbody"><span class="lt"><i class="dot" style="background:${li?colorOf(li):"var(--muted)"}"></i>${esc(li?li.name:"No module")}</span><span class="lm">${when}</span></div>
+      <button type="button" class="lbody" data-act="ledit" data-lid="${esc(l.id)}" aria-expanded="${lecEdit===l.id}" title="Edit session"><span class="lt"><i class="dot" style="background:${li?colorOf(li):"var(--muted)"}"></i>${esc(li?li.name:(l.label||"No module"))}</span><span class="lm">${when}</span></button>
       <div class="seg lseg" role="group" aria-label="Mark ${esc(ty[0])} on ${esc(lecDay(l.date))}">
         <button type="button" class="ok" data-act="lmark" data-s="attended" data-lid="${esc(l.id)}" aria-pressed="${l.status==="attended"}">Attended</button>
         <button type="button" class="no" data-act="lmark" data-s="absent" data-lid="${esc(l.id)}" aria-pressed="${l.status==="absent"}">Absent</button></div>
-      <button type="button" class="xbtn" data-act="ldelask" data-lid="${esc(l.id)}" aria-label="Delete this session">×</button></div>${conf}</li>`;
+      <button type="button" class="xbtn" data-act="ldelask" data-lid="${esc(l.id)}" aria-label="Delete this session">×</button></div>${conf}${lecEdit===l.id?lecEditHTML(l):""}</li>`;
 }
 function attendNavValue(){if(!ready.lectures||!lectures.length)return"";const t=tally(lectures);return t.rate==null?"":`${Math.round(t.rate)}%`}
 function renderAttendance(){
@@ -1085,10 +1105,11 @@ function renderAttendance(){
       ${stackBar(t)}<div class="bsub"><span>${t.attended} attended</span><span>${t.absent} absent</span>${t.unmarked?`<span class="wt">${t.unmarked} not marked</span>`:""}${extra||""}</div></div>`;
   const byType=typesPresent.map(ty=>{const t=tally(all.filter(l=>ltype(l.type)[0]===ty[0]));
     return brow(esc(ty[1]),`<span class="ltype sm" style="--tc:${ty[3]}">${ty[2]}</span>`,t)}).join("");
-  const modIds=[...new Set(all.map(l=>l.list||""))].sort((a,b)=>{const la=listById(a),lb=listById(b);return sortLists(la||{kind:"z"},lb||{kind:"z"})});
-  const byMod=modIds.map(id=>{const li=listById(id),ms=all.filter(l=>(l.list||"")===id),t=tally(ms);
+  const mk=l=>l.list&&listById(l.list)?l.list:"~"+(l.label||"");
+  const modIds=[...new Set(all.map(mk))].sort((a,b)=>{const la=listById(a),lb=listById(b);return sortLists(la||{kind:"z"},lb||{kind:"z"})});
+  const byMod=modIds.map(id=>{const li=listById(id),ms=all.filter(l=>mk(l)===id),t=tally(ms);
     const per=LTYPES.map(ty=>{const tt=tally(ms.filter(l=>ltype(l.type)[0]===ty[0]));return tt.marked||tt.unmarked||tt.upcoming?`<span class="tchip"><b>${ty[2]}</b> ${tt.marked?`${tt.attended}/${tt.marked}`:"–"}</span>`:""}).join("");
-    return brow(esc(li?li.name:"No module"),`<i class="dot" style="background:${li?colorOf(li):"var(--muted)"}"></i>`,t,per)}).join("");
+    return brow(esc(li?li.name:(id.slice(1)||"No module")),`<i class="dot" style="background:${li?colorOf(li):"var(--muted)"}"></i>`,t,per)}).join("");
   const legend=`<div class="legend"><span><i style="background:${SEGCOL.attended}"></i>Attended</span><span><i style="background:${SEGCOL.absent}"></i>Absent</span><span><i style="background:${SEGCOL.unmarked}"></i>Not marked</span></div>`;
   const breakdown=all.length?`<div class="bgrid"><section class="panel"><div class="phead"><p class="label">By type</p>${legend}</div>${byType}</section>
       <section class="panel"><p class="label">By module</p>${byMod}</section></div>`:"";
@@ -1115,10 +1136,10 @@ function renderAttendance(){
   const hist=shown.filter(l=>l.status).reverse();const histShown=lecHistAll?hist:hist.slice(0,12);
   const sec=(title,cls,items,more)=>items.length?`<section class="group ${cls}"><h2>${title}<span class="n">${items.length}</span></h2><ul class="tasks lecs">${items.map(lecRow).join("")}</ul>${more||""}</section>`:"";
   const filters=typesPresent.length>1?`<div class="seg" role="group" aria-label="Filter by type"><button type="button" data-act="lfilter" data-t="all" aria-pressed="${lecFilter==="all"}">All</button>${typesPresent.map(t=>`<button type="button" data-act="lfilter" data-t="${t[0]}" aria-pressed="${lecFilter===t[0]}">${t[1]}</button>`).join("")}</div>`:"";
-  const empty=!all.length?`<div class="empty"><strong>No sessions yet</strong>Add your lectures, tutorials and labs from your timetable. Set them to repeat weekly and you only enter each one once.</div>`:"";
+  const empty=!all.length?`<div class="empty"><strong>No sessions yet</strong>Add your lectures, tutorials and labs from your timetable, or import a spreadsheet of past attendance. Set sessions to repeat weekly and you only enter each one once.</div>`:"";
   const h=`<div class="vhead"><div><h1>Attendance</h1><p class="sub">${all.length} session${all.length===1?"":"s"} · ${T.marked} marked</p></div>
-      <div class="vtools">${lecShowAdd?"":`<button type="button" class="btn primary" data-act="laddtoggle">+ Add sessions</button>`}</div></div>
-    ${all.length?hero:""}${form}${breakdown}${empty}
+      <div class="vtools"><input type="file" id="li-file" accept=".xlsx,.xls,.csv" hidden><button type="button" class="btn" data-act="limpfile">Import spreadsheet</button>${lecShowAdd?"":`<button type="button" class="btn primary" data-act="laddtoggle">+ Add sessions</button>`}</div></div>
+    ${lecImport?importHTML():""}${all.length?hero:""}${form}${breakdown}${empty}
     ${filters?`<div class="lfilters">${filters}</div>`:""}
     ${sec("Needs marking","needm",need)}
     ${sec("Coming up · 2 weeks","",upSoon,up.length>upSoon.length?`<p class="gnote">${up.length-upSoon.length} more later in the term.</p>`:"")}
@@ -1137,6 +1158,143 @@ async function addLectures(){
   lecForm={...lecDefault(),list:f.list,type:f.type,date:f.date};lecShowAdd=false;render();
 }
 function needsMarkingCount(){return ready.lectures?lectures.filter(l=>lecState(l)==="unmarked").length:0}
+
+/* ---------- attendance: spreadsheet import & editing ---------- */
+const APP_VERSION="2026.11.24";
+const XLSX_URL="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+const DAYS=["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+let lecImport=null,lecEdit=null,lecEditAll=true;
+function loadXLSX(){
+  if(window.XLSX)return Promise.resolve(window.XLSX);
+  return new Promise((res,rej)=>{const s=document.createElement("script");s.src=XLSX_URL;s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error("xlsx"));document.head.appendChild(s)});
+}
+function matchIn(tok,pool){
+  tok=norm(tok).replace(/maths?(?=\d|$)/,"mathematics");if(tok.length<3)return null;
+  const L=pool.map(l=>({l,n:norm(l.name),c:norm(l.code),i:String(l.name||"").split(/\s+/).filter(Boolean).map(w=>/^\d+$/.test(w)?w:w[0]).join("").toLowerCase()}));
+  const hit=L.find(x=>x.c&&(x.c===tok||x.c.endsWith(tok)))||L.find(x=>x.i===tok)||L.find(x=>x.n===tok)||L.find(x=>x.n.startsWith(tok))||L.find(x=>x.n.includes(tok));
+  return hit?hit.l:null;
+}
+/* "Applicable Maths 1" → Applicable Mathematics 1, "Chemistry" → Chemical Structure and Behaviour. Only modules, never to-do lists. */
+function matchModule(name){
+  const mods=lists.filter(l=>l.kind==="module");const first=String(name||"").trim().split(/\s+/)[0]||"";
+  for(const t of [name,first.length>=5?first:"",first.slice(0,4)]){if(!t)continue;const m=matchIn(t,mods);if(m)return m}
+  return null;
+}
+function parseTimes(v){
+  const m=String(v||"").match(/(\d{1,2}):?(\d{2})\s*[-–to]+\s*(\d{1,2}):?(\d{2})/i);
+  return m?{start:`${pad(+m[1])}:${m[2]}`,end:`${pad(+m[3])}:${m[4]}`}:null;
+}
+const mins=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
+function guessType(component,mod,start,end,typeCell){
+  if(typeCell){const t=LTYPES.find(x=>norm(typeCell).startsWith(norm(x[0]).slice(0,3)));if(t)return t[0]}
+  if(/tutor/i.test(component))return"Other";
+  const hrs=(mins(end)-mins(start))/60;
+  if(hrs>=2&&/physics/i.test((mod&&mod.name)||component))return"Lab";
+  if(hrs>=2)return"Tutorial";
+  return"Lecture";
+}
+/* Reads rows with Time, Day, Week, Component (or Module), Attended? columns. Optional: Date, Type, Room. */
+function parseSheetRows(rows){
+  const hi=rows.findIndex(r=>r.some(c=>/^\s*day\s*$/i.test(String(c||"")))&&r.some(c=>/^\s*(week|date)\b/i.test(String(c||""))));
+  if(hi<0)throw new Error("I couldn't find the header row. The sheet needs columns called Time, Day and Week.");
+  const H=rows[hi].map(c=>String(c||"").trim().toLowerCase());
+  const col=re=>H.findIndex(h=>re.test(h));
+  const C={time:col(/^time/),day:col(/^day$/),week:col(/^week$/),comp:col(/^(component|module|subject|class)/),att:col(/attend/),type:col(/^type/),room:col(/^(room|location)/),date:col(/^date/)};
+  if(C.time<0||C.comp<0||(C.date<0&&(C.day<0||C.week<0)))throw new Error("The sheet needs Time, Day, Week and Component columns.");
+  const out=[];
+  rows.slice(hi+1).forEach(r=>{
+    const t=parseTimes(r[C.time]);const comp=String(r[C.comp]||"").trim();if(!t||!comp)return;
+    const ds=C.day>=0?String(r[C.day]||"").trim().toLowerCase():"";const day=ds?DAYS.findIndex(d=>d.startsWith(ds.slice(0,3))):-1;
+    const week=C.week>=0?parseInt(r[C.week],10):NaN;
+    let fixedDate=null;
+    if(C.date>=0&&r[C.date]){const v=r[C.date];
+      if(v instanceof Date)fixedDate=iso(v);
+      else{const m=String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(m)fixedDate=mkDate(m[3].length===2?2000+ +m[3]:+m[3],+m[2]-1,+m[1]);else if(validDate(String(v).slice(0,10)))fixedDate=String(v).slice(0,10)}}
+    if(!fixedDate&&(day<0||!(week>=1)))return;
+    const mod=matchModule(comp);
+    const a=C.att>=0?String(r[C.att]||"").trim().toLowerCase():"";
+    out.push({comp,list:mod?mod.id:"",label:mod?"":comp,week,day,fixedDate,start:t.start,end:t.end,
+      type:guessType(comp,mod,t.start,t.end,C.type>=0?r[C.type]:""),room:C.room>=0?String(r[C.room]||"").trim():"",
+      status:/^(y|yes|attended|present|true|1|✓)$/.test(a)?"attended":/^(n|no|absent|missed|false|0|✗|x)$/.test(a)?"absent":null});
+  });
+  if(!out.length)throw new Error("No sessions found under the header row.");
+  return out;
+}
+function importDates(imp){imp.rows.forEach(r=>{r.date=r.fixedDate||addDays(imp.week1,(r.week-1)*7+r.day)})}
+async function readImportFile(file){
+  try{
+    toast("Reading spreadsheet…");
+    const X=await loadXLSX();const wb=X.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+    let rows=null,lastErr=null;
+    for(const name of wb.SheetNames){try{rows=parseSheetRows(X.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:""}));break}catch(e){lastErr=e}}
+    if(!rows)throw lastErr||new Error("No sessions found.");
+    lecImport={file:file.name,rows,week1:"2026-09-28"};importDates(lecImport);lecShowAdd=false;render();
+    const t=$("#toast");if(t)t.hidden=true;
+  }catch(e){console.error(e);toast(e&&e.message&&!/xlsx/.test(e.message)?e.message:"Couldn't read that file. Check you're online and it's an .xlsx or .csv.")}
+}
+const lecKey=l=>`${l.list||"~"+norm(l.label)}|${l.date}|${l.start}`;
+function importHTML(){
+  const imp=lecImport,R=imp.rows,have=new Set(lectures.map(lecKey));
+  const fresh=R.filter(r=>!have.has(lecKey(r))),dup=R.length-fresh.length;
+  const dates=R.map(r=>r.date).sort(),weeks=R.map(r=>r.week).filter(w=>w>=1);
+  const cnt=k=>R.filter(r=>r.status===k).length;
+  const types=LTYPES.map(t=>[t,R.filter(r=>r.type===t[0]).length]).filter(x=>x[1]);
+  const unmatched=[...new Set(R.filter(r=>!r.list).map(r=>r.comp))];
+  const mods=[...new Set(R.filter(r=>r.list).map(r=>r.list))].map(id=>{const l=listById(id);return`<span class="tchip"><i class="dot" style="background:${colorOf(l)}"></i> ${esc(l.name)} · ${R.filter(r=>r.list===id).length}</span>`}).join("");
+  return`<section class="panel limp" aria-label="Import preview">
+    <div class="phead"><p class="label">Import from ${esc(imp.file)}</p><button type="button" class="xbtn" data-act="limpcancel" aria-label="Cancel import">×</button></div>
+    <p class="limpsum"><b class="num">${R.length}</b> sessions${weeks.length?` · weeks ${Math.min(...weeks)}–${Math.max(...weeks)}`:""} · ${esc(fmtDay(dates[0]))} – ${esc(fmtDay(dates[dates.length-1]))}</p>
+    <div class="chips"><span class="tchip ok">${cnt("attended")} attended</span><span class="tchip no">${cnt("absent")} absent</span>${cnt(null)?`<span class="tchip">${cnt(null)} not marked</span>`:""}
+      ${types.map(([t,n])=>`<span class="tchip"><b>${t[2]}</b> ${n}</span>`).join("")}</div>
+    <div class="chips">${mods}</div>
+    <div class="lgrid"><label class="flabel">Week 1 starts (Monday)<input type="date" id="li-week1" value="${esc(imp.week1)}"></label></div>
+    <ul class="gnote limpnotes">
+      <li>Types are guessed from length: 2–3 hour Physics = Lab, other 2-hour sessions = Tutorial, 1 hour = Lecture. Tap any session afterwards to change it, or change a whole weekly slot at once.</li>
+      ${unmatched.length?`<li>Not a module: ${unmatched.map(esc).join(", ")}. These are kept with their own name as Other.</li>`:""}
+      ${dup?`<li class="wt">${dup} already in DigiTrackr and will be skipped.</li>`:""}
+    </ul>
+    <div class="lfoot"><button type="button" class="btn primary" data-act="limport"${fresh.length?"":" disabled"}>${fresh.length?`Import ${fresh.length} session${fresh.length===1?"":"s"}`:"Nothing new to import"}</button><button type="button" class="btn ghost" data-act="limpcancel">Cancel</button></div>
+  </section>`;
+}
+function doImport(){
+  const have=new Set(lectures.map(lecKey));
+  const fresh=lecImport.rows.filter(r=>!have.has(lecKey(r)));
+  for(let i=0;i<fresh.length;i+=400){const b=writeBatch(fs);
+    fresh.slice(i,i+400).forEach((r,j)=>b.set(doc(lecturesCol()),{list:r.list,label:r.label,type:r.type,date:r.date,start:r.start,end:r.end,room:r.room,status:r.status,
+      markedAt:r.status?Date.now():null,series:`imp-${r.list||norm(r.label)}-${parse(r.date).getDay()}-${r.start.replace(":","")}-${r.end.replace(":","")}`,created:Date.now()+i+j}));
+    save(b.commit())}
+  toast(`Imported ${fresh.length} session${fresh.length===1?"":"s"}`);lecImport=null;animNext=true;render();
+}
+const slotOf=l=>l.series?lectures.filter(x=>x.series===l.series):[l];
+function lecEditHTML(l){
+  const slot=slotOf(l),many=slot.length>1;
+  const modOpts=`<option value=""${!l.list?" selected":""}>${esc(l.label||"No module")}</option>`+lists.filter(x=>x.kind==="module").map(x=>`<option value="${esc(x.id)}"${x.id===l.list?" selected":""}>${esc(x.name)}</option>`).join("");
+  return`<div class="ledit">
+    <div class="seg big" role="group" aria-label="Session type">${LTYPES.map(t=>`<button type="button" data-act="lsettype" data-lid="${esc(l.id)}" data-t="${t[0]}" aria-pressed="${ltype(l.type)[0]===t[0]}">${t[0]}</button>`).join("")}</div>
+    ${many?`<label class="chk"><input type="checkbox" id="le-all"${lecEditAll?" checked":""}> Change type and module for all ${slot.length} sessions in this weekly slot</label>`:""}
+    <div class="lgrid">
+      <label class="flabel lwide">Module<select id="le-list" data-lid="${esc(l.id)}">${modOpts}</select></label>
+      <label class="flabel">Starts<input type="time" id="le-start" data-lid="${esc(l.id)}" value="${esc(l.start||"")}"></label>
+      <label class="flabel">Ends<input type="time" id="le-end" data-lid="${esc(l.id)}" value="${esc(l.end||"")}"></label>
+      <label class="flabel">Room<input type="text" id="le-room" data-lid="${esc(l.id)}" value="${esc(l.room||"")}" maxlength="40" placeholder="Optional"></label>
+    </div>
+    <div class="lfoot"><button type="button" class="btn sm primary" data-act="ledit" data-lid="${esc(l.id)}">Done</button><span class="phint">Times and room change this session only.</span></div>
+  </div>`;
+}
+function lecSetType(l,t){
+  const xs=lecEditAll?slotOf(l):[l];
+  for(let i=0;i<xs.length;i+=400){const b=writeBatch(fs);xs.slice(i,i+400).forEach(x=>b.update(lecRef(x.id),{type:t}));save(b.commit())}
+  if(xs.length>1)toast(`Changed ${xs.length} sessions to ${t}`);
+}
+function lecSaveField(el){
+  const l=lectures.find(x=>x.id===el.dataset.lid);if(!l)return;
+  if(el.id==="le-list"){const xs=lecEditAll?slotOf(l):[l];
+    for(let i=0;i<xs.length;i+=400){const b=writeBatch(fs);xs.slice(i,i+400).forEach(x=>b.update(lecRef(x.id),{list:el.value}));save(b.commit())}return}
+  const f=el.id.slice(3),v=el.value.trim();
+  if((f==="start"||f==="end")&&v&&!/^\d{2}:\d{2}$/.test(v))return;
+  if(f==="end"&&v&&l.start&&v<=l.start){toast("The end time needs to be after the start time.");el.value=l.end||"";return}
+  if((l[f]||"")!==v)save(updateDoc(lecRef(l.id),{[f]:v}));
+}
 
 /* ---------- render ---------- */
 const svg=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
@@ -1309,6 +1467,11 @@ document.addEventListener("click",e=>{
       save(updateDoc(taskRef(t.id),{done,doneAt:done?Date.now():null}))}break;
     case"laddtoggle":lecShowAdd=!lecShowAdd;if(lecShowAdd&&!lecForm)lecForm=lecDefault();render();if(lecShowAdd){const f=$("#lecForm");f&&f.scrollIntoView({block:"nearest",behavior:"smooth"})}break;
     case"ltype":lecForm.type=b.dataset.t;render();break;
+    case"limpfile":{const f=$("#li-file");if(f){f.value="";f.click()}break}
+    case"limpcancel":lecImport=null;render();break;
+    case"limport":doImport();break;
+    case"ledit":lecEdit=lecEdit===b.dataset.lid?null:b.dataset.lid;lecConfirm=null;render();break;
+    case"lsettype":{const l=lectures.find(x=>x.id===b.dataset.lid);if(l)lecSetType(l,b.dataset.t);break}
     case"lfilter":lecFilter=b.dataset.t;render();break;
     case"lhist":lecHistAll=!lecHistAll;render();break;
     case"lmark":{const l=lectures.find(x=>x.id===b.dataset.lid);if(!l)break;const st=l.status===b.dataset.s?null:b.dataset.s;
@@ -1385,6 +1548,10 @@ document.addEventListener("change",e=>{
   const el=e.target;
   if(el.id==="qa-due"){if(validDate(el.value)){qa.due=el.value;syncQaChips()}return}
   if(el.id==="qa-list"){qa.list=el.value;return}
+  if(el.id==="li-file"){if(el.files&&el.files[0])readImportFile(el.files[0]);return}
+  if(el.id==="li-week1"){if(lecImport&&el.value&&validDate(el.value)){lecImport.week1=el.value;importDates(lecImport);render()}return}
+  if(el.id==="le-all"){lecEditAll=el.checked;return}
+  if(el.id&&el.id.startsWith("le-")){lecSaveField(el);return}
   if(el.id&&el.id.startsWith("lf-")){lecForm[el.id.slice(3)]=el.value;if(el.id==="lf-repeat")render();return}
   if(el.id==="f-list"){focusSel.list=el.value;focusSel.task="";ls.set("dt.focusSel",focusSel);render();return}
   if(el.id==="f-task"){focusSel.task=el.value;ls.set("dt.focusSel",focusSel);render();return}
@@ -1496,7 +1663,7 @@ function sortLists(a,b){
   return(a.created||0)-(b.created||0);
 }
 
-function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];grades=[];sessions=[];lectures=[];lecConfirm=null;lecForm=null;preds={};whatIf=false;gEditing.clear();ready={lists:false,tasks:false,grades:false,lectures:false};openId=null;confirmKey=null}
+function stop(){unsubs.forEach(u=>u());unsubs=[];lists=[];tasks=[];grades=[];sessions=[];lectures=[];lecConfirm=null;lecForm=null;lecImport=null;lecEdit=null;preds={};whatIf=false;gEditing.clear();ready={lists:false,tasks:false,grades:false,lectures:false};openId=null;confirmKey=null}
 onAuthStateChanged(auth,user=>{
   stop();
   if(!user){uid=null;$("#appView").hidden=true;$("#tabbar").hidden=true;$("#authView").hidden=false;return}
@@ -1521,7 +1688,15 @@ let lastDay=todayISO();
 const dayCheck=()=>{if(todayISO()!==lastDay){lastDay=todayISO();setToday();if(uid)render()}};
 setInterval(dayCheck,60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)dayCheck()});
 const net=()=>{$("#offline").hidden=navigator.onLine};window.addEventListener("online",net);window.addEventListener("offline",net);net();
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+{const v=$("#appVer");if(v)v.textContent=`Version ${APP_VERSION}`}
+/* Updates: the service worker always fetches the page fresh, and once a new one takes over the page reloads itself. */
+if("serviceWorker" in navigator)window.addEventListener("load",()=>{
+  const had=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})});
+  }).catch(()=>{});
+});
 </script>
 </body>
 </html>
