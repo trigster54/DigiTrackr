@@ -469,6 +469,34 @@ button.lbody:hover .lt{color:var(--accent)}
 @media (max-width:460px){.tchart{grid-template-columns:30px minmax(0,1fr)}.tyax{font-size:9.5px}.td{display:none}.tdot b{font-size:10.5px}}
 main.anim .trend{animation:rise .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:.04s}
 main.anim .tstack{transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:.2s}
+/* Activity heatmap */
+.heat{--hc:14px;--hg:3px}
+@media (min-width:880px){.heat{--hc:15px}}
+.hwrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px;align-items:end}
+.hdays{display:grid;grid-template-rows:repeat(7,var(--hc));gap:var(--hg);font-size:10px;font-weight:600;color:var(--muted);line-height:var(--hc);padding-bottom:6px}
+.hscroll{overflow-x:auto;scrollbar-width:thin;padding-bottom:6px;min-width:0}
+.hmonths{display:grid;gap:var(--hg);height:16px;font-size:10.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.hgrid{display:grid;grid-template-rows:repeat(7,var(--hc));grid-auto-flow:column;grid-auto-columns:var(--hc);gap:var(--hg);width:max-content}
+.hcell{display:block;width:var(--hc);height:var(--hc);border-radius:3.5px;border:0;padding:0;background:var(--soft);cursor:pointer}
+.hcell.l1{background:color-mix(in srgb,var(--accent) 38%,var(--soft))}
+.hcell.l2{background:color-mix(in srgb,var(--accent) 60%,var(--soft))}
+.hcell.l3{background:color-mix(in srgb,var(--accent) 80%,var(--soft))}
+.hcell.l4{background:var(--accent)}
+.hcell.l-1{background:transparent;box-shadow:inset 0 0 0 1px var(--line);cursor:default}
+.hcell.today{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--ink)}
+.hcell.sel{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--accent)}
+.hcell:not(:disabled):hover{filter:brightness(1.12)}
+.hfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.hinfo{margin:0;font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums}
+.hleg{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--muted)}
+.hleg .hcell{width:11px;height:11px;cursor:default}
+.hleg .hcell:first-of-type{margin-left:4px}.hleg .hcell:last-of-type{margin-right:4px}
+.hstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.hstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hstat{display:grid;gap:2px;background:var(--surface-2);border-radius:12px;padding:10px 12px;min-width:0}
+.hstat b{font-size:22px;font-weight:700;line-height:1.1}
+.hstat.on b{color:var(--warn)}
+main.anim .hgrid{animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:.12s}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -1429,6 +1457,66 @@ function attendTrendHTML(all){
   </section>`;
 }
 
+/* ---------- activity heatmap (Overview) ---------- */
+let heatMetric=ls.get("dt.heat","focus"); // "focus" | "tasks" | "all"
+let heatScroll=null;
+const HEAT=[["focus","Focus"],["tasks","Tasks"],["all","Both"]];
+function heatLevel(a){
+  if(!a)return 0;const m=a.mins||0,t=a.tasks||0;
+  if(heatMetric==="focus")return m<=0?0:m<30?1:m<60?2:m<120?3:4;
+  if(heatMetric==="tasks")return t<=0?0:t<2?1:t<4?2:t<6?3:4;
+  const sc=m/25+t;return sc<=0?0:sc<1.5?1:sc<3?2:sc<5?3:4;   // one 25-min session ≈ one task
+}
+const heatActive=a=>heatLevel(a)>0;
+function heatDetail(d,a){
+  const m=Math.round((a&&a.mins)||0),t=(a&&a.tasks)||0,bits=[];
+  if(m)bits.push(`${fmtMins(m)} focus`);if(t)bits.push(`${t} task${t===1?"":"s"} done`);
+  return`${parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})} · ${bits.length?bits.join(" · "):"nothing logged"}`;
+}
+function heatmapHTML(){
+  const m=activityDays(),today=todayISO();
+  const mondayOf=d=>addDays(d,-((parse(d).getDay()+6)%7));
+  const keys=[...m.keys()].filter(k=>k<=today).sort();
+  let start=mondayOf(TERM_WEEK1);if(keys.length&&keys[0]<start)start=mondayOf(keys[0]);
+  const thisMon=mondayOf(today);
+  const weeks=Math.max(40,Math.round((parse(thisMon)-parse(start))/86400000/7)+5);
+  let cells="",months="",lastMonth=-1;
+  for(let w=0;w<weeks;w++){
+    const mon=addDays(start,w*7);
+    // Month label over the first column that contains the 1st–7th of a month
+    const mo=parse(addDays(mon,6)).getMonth();
+    if(w===0||mo!==lastMonth&&+addDays(mon,6).slice(8)<=7){lastMonth=mo;months+=`<span style="grid-column:${w+1}">${parse(addDays(mon,6)).toLocaleDateString("en-GB",{month:"short"})}</span>`}
+    for(let i=0;i<7;i++){const d=addDays(mon,i),a=m.get(d),fut=d>today,lv=fut?-1:heatLevel(a);
+      cells+=`<button type="button" class="hcell l${lv}${d===today?" today":""}" data-act="hcell" data-d="${d}"${fut?" disabled":""} aria-label="${esc(heatDetail(d,a))}"></button>`}
+  }
+  // Stats over the range so far (Anki-style)
+  const days=[];for(let d=start;d<=today;d=addDays(d,1))days.push(d);
+  const act=days.filter(d=>heatActive(m.get(d)));
+  let longest=0,run=0;days.forEach(d=>{if(heatActive(m.get(d))){run++;longest=Math.max(longest,run)}else run=0});
+  let cur=0;{let d=today;if(!heatActive(m.get(d)))d=addDays(d,-1);while(d>=start&&heatActive(m.get(d))){cur++;d=addDays(d,-1)}}
+  const sumOf=(arr,f)=>arr.reduce((s,d)=>s+((m.get(d)||{})[f]||0),0);
+  const totM=sumOf(days,"mins"),totT=sumOf(days,"tasks");      // headline: everything since the start
+  const actM=sumOf(act,"mins"),actT=sumOf(act,"tasks");        // averages: per active day for this view
+  const avg=!act.length?"–":heatMetric==="tasks"?`${(actT/act.length).toFixed(1)}`:heatMetric==="focus"?fmtMins(actM/act.length):`${fmtMins(actM/act.length)} · ${(actT/act.length).toFixed(1)}`;
+  const avgLbl=heatMetric==="tasks"?"Tasks / active day":heatMetric==="focus"?"Focus / active day":"Focus · tasks / active day";
+  const tile=(v,l,cls="")=>`<div class="hstat ${cls}"><b class="num">${v}</b><span class="label">${l}</span></div>`;
+  return`<section class="act heat" aria-label="Activity heatmap">
+    <div class="acthead"><div><p class="label">Activity</p><p class="actsum"><b class="num">${fmtMins(totM)}</b> focus · <b class="num">${totT}</b> tasks done since ${esc(fmtDay(start))}</p></div>
+      <div class="seg" role="group" aria-label="Show">${HEAT.map(([k,l])=>`<button type="button" data-act="heatm" data-m="${k}" aria-pressed="${heatMetric===k}">${l}</button>`).join("")}</div></div>
+    <div class="hwrap"><div class="hdays" aria-hidden="true"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span></div>
+      <div class="hscroll"><div class="hmonths" style="grid-template-columns:repeat(${weeks},var(--hc))">${months}</div><div class="hgrid">${cells}</div></div></div>
+    <div class="hfoot"><p class="hinfo" id="heatInfo" aria-live="polite">${esc(heatDetail(today,m.get(today)))}</p>
+      <div class="hleg" aria-hidden="true">Less<i class="hcell l0"></i><i class="hcell l1"></i><i class="hcell l2"></i><i class="hcell l3"></i><i class="hcell l4"></i>More</div></div>
+    <div class="hstats">${tile(avg,avgLbl)}${tile(`${days.length?Math.round(act.length/days.length*100):0}%`,`Days active (${act.length}/${days.length})`)}${tile(`${longest} day${longest===1?"":"s"}`,"Longest streak")}${tile(`${cur} day${cur===1?"":"s"}`,"Current streak",cur?"on":"")}</div>
+  </section>`;
+}
+function placeHeat(){
+  const sc=document.querySelector(".hscroll");if(!sc)return;
+  if(heatScroll!=null){sc.scrollLeft=heatScroll;return}
+  const t=sc.querySelector(".hcell.today");if(t)sc.scrollLeft=Math.max(0,t.offsetLeft-sc.clientWidth*.7);
+}
+document.addEventListener("scroll",e=>{if(e.target&&e.target.classList&&e.target.classList.contains("hscroll"))heatScroll=e.target.scrollLeft},true);
+
 /* ---------- render ---------- */
 const svg=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const ICONS={
@@ -1538,7 +1626,7 @@ function renderMain(){
   h+=summaryHTML(mine);
   if(view==="upcoming"){const nm=needsMarkingCount();
     if(nm)h+=`<button type="button" class="nudge" data-act="view" data-id="attend"><span class="ltype sm" style="--tc:var(--warn)">!</span><span><b>${nm} session${nm===1?"":"s"}</b> to mark as attended or absent</span><span class="go">Attendance →</span></button>`;
-    h+=activityHTML()}
+    h+=heatmapHTML()}
 
   h+=`<form class="qa" id="qa"><div class="top"><input type="text" id="qa-title" placeholder="Add a task… try &quot;lab report fri #physics !&quot;" maxlength="200" autocomplete="off" enterkeyhint="done" aria-describedby="qa-preview"><button class="btn primary" type="submit">Add</button></div>
     <div class="qprev" id="qa-preview" aria-live="polite" hidden></div>
@@ -1568,7 +1656,7 @@ function renderMain(){
   }
   const a=document.activeElement;const fid=a&&a.id;let ss=null,se=null;try{ss=a.selectionStart;se=a.selectionEnd}catch(e){}
   const qv=$("#qa-title")?$("#qa-title").value:"";
-  m.innerHTML=h;
+  m.innerHTML=h;placeHeat();
   if(qv)$("#qa-title").value=qv;
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});try{if(ss!=null)el.setSelectionRange(ss,se)}catch(e){}}}
   const rn=$("#rn-name");if(rn&&fid!=="rn-name"){rn.focus();rn.select()}
@@ -1617,6 +1705,9 @@ document.addEventListener("click",e=>{
       const xs=lectures.filter(x=>x.series&&x.series===l.series);
       for(let i=0;i<xs.length;i+=450){const bt=writeBatch(fs);xs.slice(i,i+450).forEach(x=>bt.delete(lecRef(x.id)));save(bt.commit())}
       toast(`Deleted ${xs.length} sessions`);break}
+    case"heatm":heatMetric=b.dataset.m;ls.set("dt.heat",heatMetric);render();break;
+    case"hcell":{const i=$("#heatInfo");if(i)i.textContent=heatDetail(b.dataset.d,activityDays().get(b.dataset.d));
+      document.querySelectorAll(".hcell.sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");break}
     case"fdur":focusSel.dur=+b.dataset.m;ls.set("dt.focusSel",focusSel);render();break;
     case"fstart":startTimer();break;
     case"fpause":pauseTimer();break;
